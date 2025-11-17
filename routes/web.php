@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MahasiswaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,10 +26,10 @@ Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Dashboard Routes (Placeholder)
-Route::get('/mahasiswa/dashboard', function () {
-    return 'Mahasiswa Dashboard - Halaman ini hanya bisa diakses oleh mahasiswa';
-})->middleware('auth');
+// Dashboard Routes
+Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'dashboard'])
+    ->middleware('auth')
+    ->name('mahasiswa.dashboard');
 
 Route::get('/dosen/dashboard', function () {
     return 'Dosen Dashboard - Halaman ini hanya bisa diakses oleh dosen';

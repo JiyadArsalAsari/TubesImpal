@@ -41,22 +41,16 @@
 
 <!-- Navigation -->
 
-<nav class="bg-[#485A48] shadow-sm py-4">
-    <div class="container mx-auto px-4 flex items-center justify-between">
-
-        <div class="w-1/3"></div>
-
-        <!-- LOGO -->
-        <div class="w-1/3 flex justify-center">
-            <img src="{{ asset('logo.png') }}" class="h-6 md:h-8 lg:h-10" alt="StudyFlow Logo">
-        </div>
+<nav class="bg-[#485A48] shadow-sm py-4 relative">
+    <div class="flex items-center px-4">
+        <div class="flex-grow"></div>
 
         <!-- Right Menu -->
-        <div class="w-1/3 flex justify-end items-center space-x-6">
+        <div class="flex justify-end pr-160">
 
             <!-- Sign In Dropdown -->
             <div class="relative dropdown">
-                <button class="dropdown-button bg-white-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center">
+                <button class="dropdown-button bg-white-700 hover:bg-green-800 text-white px-2 py-2 rounded-lg transition duration-300 flex items-center">
                     Sign In
                     <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -78,7 +72,7 @@
 
             <!-- Sign Up -->
             <a href="{{ route('register') }}" 
-               class="dropdown-button bg-white-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center">
+               class="dropdown-button bg-white-700 hover:bg-green-800 text-white px-2 py-2 rounded-lg transition duration-300 flex items-center">
                 Sign Up
                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
@@ -93,12 +87,15 @@
     <!-- Main Content -->
     <main class="flex-grow">
     <!-- Hero Section -->
-    <section class="flex flex-col items-center justify-center text-center min-h-[calc(100vh-140px)] px-6">
+    <section class="flex flex-col items-center justify-start pt-4 min-h-[calc(100vh-140px)] px-6">
+        <div class="mb-3">
+            <img src="{{ asset('logo.png') }}" class="h-80 mx-auto" alt="StudyFlow Logo">
+        </div>
         <h1 class="text-4xl md:text-5xl font-bold">
             Welcome To <span class=>StudyFlow!</span>
         </h1>
 
-        <p class="mt-4 max-w-xl text-gray-600">
+        <p class="mt-4 max-w-xl text-gray-600 text-center">
              Aplikasi ini bertujuan untuk memberikan layanan terbaik kepada mahasiswa agar dapat belajar
             dengan baik serta tetap ingat terhadap tugas-tugasnya.
         </p>   
@@ -110,11 +107,11 @@
     <!-- Footer -->
     <footer class="bg-[#485A48] text-white py-8">
         <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
+            <div class="flex flex-col md:flex-row justify-between items-center w-full">
+                <div class="mb-4 md:mb-0 absolute left-4">
                     <p>FOLLOW</p>
                 </div>
-                <div class="flex space-x-6">
+                <div class="flex space-x-6 absolute right-4">
                     <!-- Social Media Icons -->
                     <a href="#" class="text-white hover:text-green-200">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- FontAwesome Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -17,90 +13,82 @@
         <img src="{{ asset('line.png') }}" alt="Decorative Line" class="w-full h-full object-cover opacity-10 scale-150">
     </div>
 
-    <!-- Content Container -->
     <div class="relative z-10 min-h-screen">
         <!-- HEADER -->
-        <div class="w-full bg-[#1f2f1f] text-white py-3 px-6 flex items-center justify-between" style="height: 80px;">
-            <!-- Left: Name -->
-            <div class="text-lg font-semibold">
-                {{ Auth::user()->name }}
+        <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
+            <div class="text-2xl font-bold">{{ Auth::user()->name }}</div>
+            <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
             </div>
-
-            <!-- Center: Logo Only -->
-            <div class="flex items-center justify-center">
-                <img src="{{ asset('logo.png') }}" alt="StudyFlow Logo" class="w-24 h-24 filter brightness-0 invert" style="margin-top: -10px;">
-            </div>
-
-            <!-- Right Icons -->
-            <div class="flex gap-4 text-2xl">
+            <div class="flex gap-6 text-3xl">
                 <i class="fa-regular fa-bell cursor-pointer"></i>
                 <i class="fa-solid fa-gear cursor-pointer"></i>
             </div>
-        </div>
+        </header>
 
-        <!-- MAIN CONTENT -->
-        <div class="p-6">
-            <!-- Greeting -->
-            <h2 class="text-center text-2xl font-semibold mb-8">
-                Hello {{ Auth::user()->name }}, Welcome Back To StudyFlow!
-            </h2>
+        <!-- Greeting -->
+        <h2 class="text-center text-3xl font-bold mt-10 mb-12">
+            Hello {{ Auth::user()->name }}, Welcome Back To StudyFlow!
+        </h2>
 
-            <!-- Cards: Schedule & Deadline -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 justify-center max-w-2xl mx-auto">
-                <!-- Schedule Card -->
-                <div class="bg-[#e6e7d9] text-black shadow-lg rounded-xl p-8 mx-auto w-64">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i class="fa-regular fa-calendar text-lg"></i>
-                        <p class="font-semibold">Your Schedule Today</p>
-                    </div>
-                    <p class="font-medium">Interaksi Manusia Komputer</p>
-                    <p class="text-sm mt-1">KU1.03.18 — 08.30 - 11.30</p>
+        <!-- Cards Section -->
+        <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
+            <!-- Schedule Card -->
+            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center">
+                <div class="flex items-center gap-4 mb-4">
+                    <i class="fa-regular fa-calendar text-2xl"></i>
+                    <span class="font-bold text-xl">Your Schedule Today</span>
                 </div>
-
-                <!-- Deadline Card -->
-                <div class="bg-[#e6e7d9] text-black shadow-lg rounded-xl p-8 mx-auto w-64">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i class="fa-regular fa-clock text-lg"></i>
-                        <p class="font-semibold">Your Deadline Today</p>
-                    </div>
-                    <p class="font-medium">Convert Class Diagram to Code</p>
-                    <p class="text-sm mt-1">16.00</p>
-                </div>
+                <p class="font-bold text-xl mb-2">Interaksi Manusia Komputer</p>
+                <p class="text-lg">KU1.03.18 — 08.30 - 11.30</p>
             </div>
 
-            <!-- Menu Buttons -->
-            <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5 max-w-xl mx-auto">
-                <!-- Row 1 -->
-                <button class="flex items-center gap-4 bg-[#2f3b26] p-5 rounded-xl shadow text-white">
-                    <i class="fa-solid fa-cloud text-xl"></i>
-                    <span class="font-medium">Learning Difficulties</span>
+            <!-- Deadline Card -->
+            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center">
+                <div class="flex items-center gap-4 mb-4">
+                    <i class="fa-regular fa-clock text-2xl"></i>
+                    <span class="font-bold text-xl">Your Deadline Today</span>
+                </div>
+                <p class="font-bold text-xl mb-2">Convert Class Diagram to Code</p>
+                <p class="text-lg">16.00</p>
+            </div>
+        </div>
+
+        <!-- Menu Buttons -->
+        <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
+            <!-- Left Column -->
+            <div class="flex flex-col gap-6">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                    <i class="fa-solid fa-cloud text-2xl"></i>
+                    <span class="font-bold text-xl">Learning Difficulties</span>
                 </button>
 
-                <button class="flex items-center gap-4 bg-[#2f3b26] p-5 rounded-xl shadow text-white">
-                    <i class="fa-regular fa-calendar text-xl"></i>
-                    <span class="font-medium">Schedule</span>
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                    <i class="fa-regular fa-lightbulb text-2xl"></i>
+                    <span class="font-bold text-xl">Learning Recommendation</span>
                 </button>
 
-                <!-- Row 2 -->
-                <button class="flex items-center gap-4 bg-[#2f3b26] p-5 rounded-xl shadow text-white">
-                    <i class="fa-regular fa-lightbulb text-xl"></i>
-                    <span class="font-medium">Learning Recommendation</span>
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                    <i class="fa-solid fa-chart-column text-2xl"></i>
+                    <span class="font-bold text-xl">Learning Development</span>
+                </button>
+            </div>
+
+            <!-- Right Column -->
+            <div class="flex flex-col gap-6">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                    <i class="fa-regular fa-calendar text-2xl"></i>
+                    <span class="font-bold text-xl">Schedule</span>
                 </button>
 
-                <button class="flex items-center gap-4 bg-[#2f3b26] p-5 rounded-xl shadow text-white">
-                    <i class="fa-solid fa-clock text-xl"></i>
-                    <span class="font-medium">Deadline</span>
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                    <i class="fa-solid fa-clock text-2xl"></i>
+                    <span class="font-bold text-xl">Deadline</span>
                 </button>
 
-                <!-- Row 3 -->
-                <button class="flex items-center gap-4 bg-[#2f3b26] p-5 rounded-xl shadow text-white">
-                    <i class="fa-solid fa-chart-column text-xl"></i>
-                    <span class="font-medium">Learning Development</span>
-                </button>
-
-                <button class="flex items-center gap-4 bg-[#2f3b26] p-5 rounded-xl shadow text-white">
-                    <i class="fa-solid fa-list-check text-xl"></i>
-                    <span class="font-medium">Excercise</span>
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                    <i class="fa-solid fa-list-check text-2xl"></i>
+                    <span class="font-bold text-xl">Exercise</span>
                 </button>
             </div>
         </div>

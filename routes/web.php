@@ -31,6 +31,15 @@ Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'dashboard'])
     ->middleware('auth')
     ->name('mahasiswa.dashboard');
 
+// Learning Recommendation Routes
+Route::get('/mahasiswa/content', [MahasiswaController::class, 'content'])
+    ->middleware('auth')
+    ->name('mahasiswa.content');
+
+Route::get('/mahasiswa/content/{id}', [MahasiswaController::class, 'contentDetail'])
+    ->middleware('auth')
+    ->name('mahasiswa.content.detail');
+
 Route::get('/dosen/dashboard', function () {
     return 'Dosen Dashboard - Halaman ini hanya bisa diakses oleh dosen';
 })->middleware('auth');

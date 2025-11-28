@@ -239,12 +239,12 @@
         <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
             <!-- Left Column -->
             <div class="flex flex-col gap-6">
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.learning.difficulties') }}'">
                     <i class="fa-solid fa-cloud text-2xl"></i>
                     <span class="font-bold text-xl">Learning Difficulties</span>
                 </button>
 
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.content') }}'">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.learning.recommendation') }}'">
                     <i class="fa-regular fa-lightbulb text-2xl"></i>
                     <span class="font-bold text-xl">Learning Recommendation</span>
                 </button>

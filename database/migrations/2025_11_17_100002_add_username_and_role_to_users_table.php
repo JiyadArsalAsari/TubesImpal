@@ -12,8 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('username')->unique()->after('email');
-            $table->enum('role', ['mahasiswa', 'dosen'])->after('password');
+            // Check if columns don't already exist before adding them
+            if (!Schema::hasColumn('users', 'username')) {
+                $table->string('username')->unique()->after('email');
+            }
+            if (!Schema::hasColumn('users', 'role')) {
+                $table->enum('role', ['mahasiswa', 'dosen'])->after('password');
+            }
         });
     }
 
@@ -23,7 +28,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['username', 'role']);
+            if (Schema::hasColumn('users', 'username')) {
+                $table->dropColumn('username');
+            }
+            if (Schema::hasColumn('users', 'role')) {
+                $table->dropColumn('role');
+            }
         });
     }
 };

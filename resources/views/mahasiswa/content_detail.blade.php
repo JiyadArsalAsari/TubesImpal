@@ -3,7 +3,7 @@
 @section('content')
     <div class="max-w-4xl mx-auto">
         <!-- Back Button -->
-        <button onclick="window.location.href='/mahasiswa/content'" class="flex items-center gap-2 text-gray-300 hover:text-white mb-8 transition">
+        <button onclick="window.location.href='{{ route('mahasiswa.learning.recommendation') }}'" class="flex items-center gap-2 text-gray-300 hover:text-white mb-8 transition">
             <i class="fa-solid fa-arrow-left"></i>
             <span>Kembali ke Rekomendasi</span>
         </button>

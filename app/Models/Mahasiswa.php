@@ -21,4 +21,9 @@ class Mahasiswa extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function learningDifficulties()
+    {
+        return $this->hasMany(LearningDifficulty::class);
+    }
 }

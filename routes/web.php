@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MahasiswaController;
+use App\Http\Controllers\LearningDifficultyController;
+use App\Http\Controllers\LearningRecommendationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,15 +33,29 @@ Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'dashboard'])
     ->middleware('auth')
     ->name('mahasiswa.dashboard');
 
-// Learning Recommendation Routes
-Route::get('/mahasiswa/content', [MahasiswaController::class, 'content'])
+// Learning Difficulties Routes
+Route::get('/mahasiswa/learning-difficulties', [LearningDifficultyController::class, 'index'])
     ->middleware('auth')
-    ->name('mahasiswa.content');
-
-Route::get('/mahasiswa/content/{id}', [MahasiswaController::class, 'contentDetail'])
+    ->name('mahasiswa.learning.difficulties');
+    
+Route::get('/mahasiswa/learning-difficulties/create', [LearningDifficultyController::class, 'create'])
     ->middleware('auth')
-    ->name('mahasiswa.content.detail');
+    ->name('mahasiswa.learning.difficulties.create');
+    
+Route::post('/mahasiswa/learning-difficulties', [LearningDifficultyController::class, 'store'])
+    ->middleware('auth')
+    ->name('mahasiswa.learning.difficulties.store');
 
 Route::get('/dosen/dashboard', function () {
     return 'Dosen Dashboard - Halaman ini hanya bisa diakses oleh dosen';
 })->middleware('auth');
+
+Route::get('/mahasiswa/learning-recommendation', 
+    [LearningRecommendationController::class, 'index'])
+    ->middleware('auth')
+    ->name('mahasiswa.learning.recommendation');
+
+Route::get('/mahasiswa/learning-recommendation/{id}', 
+    [LearningRecommendationDetailController::class, 'show'])
+    ->middleware('auth')
+    ->name('mahasiswa.learning.recommendation.detail');

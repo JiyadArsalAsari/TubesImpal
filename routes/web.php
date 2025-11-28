@@ -16,8 +16,8 @@ use App\Http\Controllers\MahasiswaController;
 */
 
 Route::get('/', function () {
-    return redirect()->route('login');
-});
+    return view('landing');
+})->name('landing');
 
 // Authentication Routes
 Route::get('/register', [AuthController::class, 'registerForm'])->name('register');

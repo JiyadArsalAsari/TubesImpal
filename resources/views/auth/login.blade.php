@@ -31,6 +31,9 @@
 
             <form method="POST" action="{{ route('login') }}" class="login-form w-full relative z-10">
                 @csrf
+                @if(isset($role))
+                    <input type="hidden" name="role" value="{{ $role }}">
+                @endif
                 <div class="input-group relative mb-5">
                     <span class="icon absolute top-1/2 left-3 transform -translate-y-1/2 text-xl opacity-70"><img src="{{ asset('logoUser.png') }}" class="w-5 h-5"></span>
                     <input type="text" name="username_or_email" placeholder="Email or Username" value="{{ old('username_or_email') }}" required class="w-full pl-12 pr-4 py-3.5 rounded-lg text-gray-700 focus:outline-none">

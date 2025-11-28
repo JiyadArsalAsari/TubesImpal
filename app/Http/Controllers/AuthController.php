@@ -16,9 +16,10 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    public function loginForm()
+    public function loginForm(Request $request)
     {
-        return view('auth.login');
+        $role = $request->query('role');
+        return view('auth.login', compact('role'));
     }
 
     public function register(Request $request)
@@ -98,6 +99,15 @@ class AuthController extends Controller
 
             // Redirect berdasarkan role
             $user = Auth::user();
+            
+            // Jika ada role dari parameter, cek apakah sesuai dengan role user
+            if ($request->has('role') && $request->role !== $user->role) {
+                Auth::logout();
+                return back()->withErrors([
+                    'username_or_email' => 'Anda tidak memiliki akses sebagai ' . $request->role . '.',
+                ]);
+            }
+            
             if ($user->role == 'mahasiswa') {
                 return redirect('/mahasiswa/dashboard');
             } else {

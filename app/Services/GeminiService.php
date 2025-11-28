@@ -31,7 +31,7 @@ class GeminiService
             return "ERROR: API key not configured. Please set GEMINI_API_KEY in your .env file.";
         }
         
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={$this->apiKey}";
+        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={$this->apiKey}";
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',

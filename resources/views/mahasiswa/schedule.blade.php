@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+
+
+
 <style>
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
@@ -12,8 +15,52 @@
     .overflow-x-auto.active {
         user-select: none;
     }
+    
+    /* Success Popup */
+    .popup {
+        position: fixed;
+        top: 80px; /* Height of the header */
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
+    }
+    
+    .popup.success {
+        background-color: #4CAF50;
+    }
+    
+    .popup.error {
+        background-color: #f44336;
+    }
 </style>
 <div class="min-h-screen w-full bg-[#44543D] bg-cover bg-center p-6">
+    
+    <!-- Success Popup -->
+    <div id="successPopup" class="popup success">
+        @if(session('success'))
+            @if(strpos(session('success'), 'added') !== false)
+                Your schedule added successfully!
+            @else
+                Schedule deleted successfully!
+            @endif
+        @else
+            Schedule deleted successfully!
+        @endif
+    </div>
+    
+    <!-- Error Popup -->
+    <div id="errorPopup" class="popup error">
+        @if(session('error'))
+            {{ session('error') }}
+        @else
+            Error deleting schedule!
+        @endif
+    </div>
 
     <!-- Your Schedule Title -->
     <h2 class="text-center text-white mt-8 text-lg font-semibold">Your Schedule:</h2>
@@ -92,7 +139,7 @@
                             <div class="col-span-2 border-t-2 border-white my-4"></div>
                         @endif
                         
-                        <div class="bg-[#ECEFD9] rounded-2xl p-6 shadow-md text-black">
+                        <div class="bg-[#ECEFD9] rounded-2xl p-6 shadow-md text-black relative">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-bold text-xl mb-2">{{ $schedule->subject_name }}</h3>
                                 <span class="bg-[#233122] text-white text-xs px-2 py-1 rounded-full">{{ $schedule->day }}</span>
@@ -107,6 +154,15 @@
                                     <p>{{ $schedule->time }}</p>
                                 </div>
                             </div>
+                            
+                            <!-- Delete Button -->
+                            <form action="{{ route('mahasiswa.schedule.destroy', $schedule->id) }}" method="POST" class="absolute top-2 right-2">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Are you sure you want to delete this schedule?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
                         </div>
                         
                         @php
@@ -236,6 +292,28 @@
         // Function to close schedule modal (if needed elsewhere)
         function closeScheduleModal() {
             // This function is kept for compatibility but not used in this view
+        }
+        
+        // Show popup based on session messages
+        window.onload = function() {
+            @if(session('success'))
+                showPopup('successPopup');
+            @endif
+            
+            @if(session('error'))
+                showPopup('errorPopup');
+            @endif
+        };
+        
+        // Function to show popup
+        function showPopup(popupId) {
+            const popup = document.getElementById(popupId);
+            if (popup) {
+                popup.style.display = 'block';
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 3000); // Hide after 3 seconds
+            }
         }
     </script>
 @endsection

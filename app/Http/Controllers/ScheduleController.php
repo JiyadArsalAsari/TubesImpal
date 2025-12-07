@@ -63,4 +63,25 @@ class ScheduleController extends Controller
         
         return redirect()->back()->with('success', 'Schedule added successfully!');
     }
+    
+    public function destroy($id)
+    {
+        // Ensure only mahasiswa can access this
+        if (Auth::user()->role !== 'mahasiswa') {
+            return redirect('/');
+        }
+        
+        // Find the schedule
+        $schedule = Schedule::findOrFail($id);
+        
+        // Check if the schedule belongs to the authenticated mahasiswa
+        if ($schedule->mahasiswa_id !== Auth::user()->mahasiswa->id) {
+            return redirect()->back()->with('error', 'Unauthorized access!');
+        }
+        
+        // Delete the schedule
+        $schedule->delete();
+        
+        return redirect()->back()->with('success', 'Schedule deleted successfully!');
+    }
 }

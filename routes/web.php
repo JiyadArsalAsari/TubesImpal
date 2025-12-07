@@ -67,3 +67,6 @@ Route::get('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::clas
 Route::post('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::class, 'store'])
     ->middleware('auth')
     ->name('mahasiswa.schedule.store');
+Route::delete('/mahasiswa/schedule/{id}', [App\Http\Controllers\ScheduleController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('mahasiswa.schedule.destroy');

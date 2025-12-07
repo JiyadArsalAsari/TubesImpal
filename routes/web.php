@@ -59,3 +59,11 @@ Route::get('/mahasiswa/learning-recommendation/{id}',
     [LearningRecommendationDetailController::class, 'show'])
     ->middleware('auth')
     ->name('mahasiswa.learning.recommendation.detail');
+
+// Schedule Route
+Route::get('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::class, 'index'])
+    ->middleware('auth')
+    ->name('mahasiswa.schedule');
+Route::post('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::class, 'store'])
+    ->middleware('auth')
+    ->name('mahasiswa.schedule.store');

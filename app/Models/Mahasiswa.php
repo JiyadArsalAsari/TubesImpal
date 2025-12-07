@@ -26,4 +26,9 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(LearningDifficulty::class);
     }
+    
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
 }

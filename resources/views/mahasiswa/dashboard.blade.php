@@ -215,13 +215,58 @@
         <!-- Cards Section -->
         <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
             <!-- Schedule Card -->
-            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center">
+            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center cursor-pointer" onclick="openScheduleModal()">
                 <div class="flex items-center gap-4 mb-4">
                     <i class="fa-regular fa-calendar text-2xl"></i>
                     <span class="font-bold text-xl">Your Schedule Today</span>
                 </div>
-                <p class="font-bold text-xl mb-2">Interaksi Manusia Komputer</p>
-                <p class="text-lg">KU1.03.18 — 08.30 - 11.30</p>
+                @if($todaysSchedule)
+                    <p class="font-bold text-xl mb-2 text-black">{{ $todaysSchedule->subject_name }}</p>
+                    <p class="text-lg text-black">{{ $todaysSchedule->room }} — {{ $todaysSchedule->time }}</p>
+                @else
+                    <p class="font-bold text-xl mb-2 text-black">No schedule for today</p>
+                @endif
+            </div>
+
+            <!-- Hidden schedule data for modal -->
+            <div id="scheduleItems" class="hidden">
+                @if(isset($allTodaysSchedules))
+                    @if($allTodaysSchedules->count() > 0)
+                        @foreach($allTodaysSchedules as $schedule)
+                            <div class="bg-white rounded-2xl p-6 mb-4 shadow-md">
+                                <h3 class="font-bold text-xl mb-2 text-black">{{ $schedule->subject_name }}</h3>
+                                <div class="flex justify-between text-black">
+                                    <div>
+                                        <p class="font-semibold">Room</p>
+                                        <p>{{ $schedule->room }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold">Time</p>
+                                        <p>{{ $schedule->time }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <p class="text-black text-center py-8">No schedules for today.</p>
+                    @endif
+                @else
+                    <p class="text-black text-center py-8">No schedules available.</p>
+                @endif
+            </div>
+
+            <!-- Schedule Modal -->
+            <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-[#e6e7d9] rounded-3xl p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-black">Today's Schedule</h2>
+                        <button onclick="closeScheduleModal()" class="text-black text-2xl">&times;</button>
+                    </div>
+                    
+                    <div id="modalScheduleList">
+                        <!-- Schedule items will be loaded here -->
+                    </div>
+                </div>
             </div>
 
             <!-- Deadline Card -->
@@ -257,7 +302,7 @@
 
             <!-- Right Column -->
             <div class="flex flex-col gap-6">
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.schedule') }}'">
                     <i class="fa-regular fa-calendar text-2xl"></i>
                     <span class="font-bold text-xl">Schedule</span>
                 </button>
@@ -290,6 +335,43 @@
                 toggleProfilePopup();
             });
         });
+        
+        // Schedule Modal Functions
+        function openScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            modal.classList.remove('hidden');
+            loadScheduleData();
+        }
+        
+        function closeScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            modal.classList.add('hidden');
+        }
+        
+        function loadScheduleData() {
+            // In a real implementation, this would fetch data from the server
+            // For now, we'll use the data rendered in the HTML
+            const scheduleList = document.getElementById('modalScheduleList');
+            
+            // Clear existing content
+            scheduleList.innerHTML = '';
+            
+            // Add schedule items from pre-rendered HTML
+            const scheduleItems = document.getElementById('scheduleItems');
+            if (scheduleItems) {
+                scheduleList.innerHTML = scheduleItems.innerHTML;
+            } else {
+                scheduleList.innerHTML = '<p class="text-black text-center py-8">No schedules available.</p>';
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('scheduleModal');
+            if (event.target == modal) {
+                closeScheduleModal();
+            }
+        }
         
         // Toggle profile popup visibility
         function toggleProfilePopup() {

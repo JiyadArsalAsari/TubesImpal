@@ -254,6 +254,39 @@
                     <p class="text-black text-center py-8">No schedules available.</p>
                 @endif
             </div>
+            
+            <!-- Hidden deadline data for modal -->
+            <div id="deadlineItems" class="hidden">
+                @if(isset($allDeadlines))
+                    @php
+                        $todayDate = now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->toDateString();
+                        $todaysDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
+                            return $deadline->date === $todayDate;
+                        });
+                    @endphp
+                    @if($todaysDeadlines->count() > 0)
+                        @foreach($todaysDeadlines as $deadline)
+                            <div class="bg-white rounded-2xl p-6 mb-4 shadow-md">
+                                <h3 class="font-bold text-xl mb-2 text-black">{{ $deadline->subject_name }}</h3>
+                                <div class="flex justify-between text-black">
+                                    <div>
+                                        <p class="font-semibold">Date</p>
+                                        <p>{{ $deadline->date }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold">Time</p>
+                                        <p>{{ $deadline->time }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <p class="text-black text-center py-8">No deadlines for today.</p>
+                    @endif
+                @else
+                    <p class="text-black text-center py-8">No deadlines available.</p>
+                @endif
+            </div>
 
             <!-- Schedule Modal -->
             <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -269,14 +302,32 @@
                 </div>
             </div>
 
+            <!-- Deadline Modal -->
+            <div id="deadlineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-[#e6e7d9] rounded-3xl p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-black">Today's Deadline</h2>
+                        <button onclick="closeDeadlineModal()" class="text-black text-2xl">&times;</button>
+                    </div>
+                    
+                    <div id="modalDeadlineList">
+                        <!-- Deadline items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Deadline Card -->
-            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center">
+            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center cursor-pointer" onclick="openDeadlineModal()">
                 <div class="flex items-center gap-4 mb-4">
                     <i class="fa-regular fa-clock text-2xl"></i>
                     <span class="font-bold text-xl">Your Deadline Today</span>
                 </div>
-                <p class="font-bold text-xl mb-2">Convert Class Diagram to Code</p>
-                <p class="text-lg">16.00</p>
+                @if($todaysDeadline)
+                    <p class="font-bold text-xl mb-2 text-black">{{ $todaysDeadline->subject_name }}</p>
+                    <p class="text-lg text-black">{{ $todaysDeadline->time }}</p>
+                @else
+                    <p class="font-bold text-xl mb-2 text-black">No deadline for today</p>
+                @endif
             </div>
         </div>
 
@@ -307,7 +358,7 @@
                     <span class="font-bold text-xl">Schedule</span>
                 </button>
 
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.deadline') }}'">
                     <i class="fa-solid fa-clock text-2xl"></i>
                     <span class="font-bold text-xl">Deadline</span>
                 </button>
@@ -365,11 +416,44 @@
             }
         }
         
+        // Deadline Modal Functions
+        function openDeadlineModal() {
+            const modal = document.getElementById('deadlineModal');
+            modal.classList.remove('hidden');
+            loadDeadlineData();
+        }
+        
+        function closeDeadlineModal() {
+            const modal = document.getElementById('deadlineModal');
+            modal.classList.add('hidden');
+        }
+        
+        function loadDeadlineData() {
+            // In a real implementation, this would fetch data from the server
+            // For now, we'll use the data rendered in the HTML
+            const deadlineList = document.getElementById('modalDeadlineList');
+            
+            // Clear existing content
+            deadlineList.innerHTML = '';
+            
+            // Add deadline items from pre-rendered HTML
+            const deadlineItems = document.getElementById('deadlineItems');
+            if (deadlineItems) {
+                deadlineList.innerHTML = deadlineItems.innerHTML;
+            } else {
+                deadlineList.innerHTML = '<p class="text-black text-center py-8">No deadlines available.</p>';
+            }
+        }
+        
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('scheduleModal');
-            if (event.target == modal) {
+            const scheduleModal = document.getElementById('scheduleModal');
+            const deadlineModal = document.getElementById('deadlineModal');
+            
+            if (event.target == scheduleModal) {
                 closeScheduleModal();
+            } else if (event.target == deadlineModal) {
+                closeDeadlineModal();
             }
         }
         

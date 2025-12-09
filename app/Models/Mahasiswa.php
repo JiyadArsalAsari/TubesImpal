@@ -31,4 +31,9 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(Schedule::class);
     }
+    
+    public function deadlines()
+    {
+        return $this->hasMany(Deadline::class);
+    }
 }

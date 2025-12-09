@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
+use App\Models\Deadline;
 
 class MahasiswaController extends Controller
 {
@@ -37,9 +38,24 @@ class MahasiswaController extends Controller
             ->orWhere('day', ucfirst(strtolower($today)))
             ->orderBy('time')
             ->get();
+        
+        // Get today's deadline
+        $todayDate = Carbon::now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->toDateString();
+        $todaysDeadline = $mahasiswa->deadlines()
+            ->where('date', $todayDate)
+            ->orderBy('time')
+            ->first();
+        
+        // Get all deadlines sorted by date and time
+        $allDeadlines = $mahasiswa->deadlines->sortBy(function ($deadline) {
+            return [
+                $deadline->date,
+                $deadline->time
+            ];
+        });
 
         // Return the dashboard view
-        return view('mahasiswa.dashboard', compact('mahasiswa', 'todaysSchedule', 'allTodaysSchedules'));
+        return view('mahasiswa.dashboard', compact('mahasiswa', 'todaysSchedule', 'allTodaysSchedules', 'todaysDeadline', 'allDeadlines'));
     }
 
     public function content()

@@ -179,6 +179,20 @@
     <!-- Add New Schedule Section -->
     <h2 class="text-center text-white text-lg font-semibold">Add New Schedule</h2>
 
+    <!-- Validation Errors -->
+    @if ($errors->any())
+        <div class="flex justify-center mt-4">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg w-[600px]">
+                <strong>Whoops!</strong> There were some problems with your input.<br><br>
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <div class="flex justify-center mt-6">
         <div class="bg-[#ECEFD9] w-[600px] rounded-xl p-6 shadow-lg">
             <form action="{{ route('mahasiswa.schedule.store') }}" method="POST">

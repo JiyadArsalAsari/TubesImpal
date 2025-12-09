@@ -51,8 +51,15 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'subject_name' => 'required|string|max:255',
             'day' => 'required|string|max:20',
-            'time' => 'required|string|max:50',
+            'time' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9] - ([0-1][0-9]|2[0-3]):[0-5][0-9]$/'
+            ],
             'room' => 'required|string|max:50',
+        ], [
+            'time.regex' => 'The time format must be HH:MM - HH:MM (24-hour format), e.g., 08:00 - 10:00'
         ]);
         
         // Add mahasiswa_id to the validated data

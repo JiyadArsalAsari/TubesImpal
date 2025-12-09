@@ -70,3 +70,14 @@ Route::post('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::cla
 Route::delete('/mahasiswa/schedule/{id}', [App\Http\Controllers\ScheduleController::class, 'destroy'])
     ->middleware('auth')
     ->name('mahasiswa.schedule.destroy');
+
+// Deadline Route
+Route::get('/mahasiswa/deadline', [App\Http\Controllers\DeadlineController::class, 'index'])
+    ->middleware('auth')
+    ->name('mahasiswa.deadline');
+Route::post('/mahasiswa/deadline', [App\Http\Controllers\DeadlineController::class, 'store'])
+    ->middleware('auth')
+    ->name('mahasiswa.deadline.store');
+Route::delete('/mahasiswa/deadline/{id}', [App\Http\Controllers\DeadlineController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('mahasiswa.deadline.destroy');

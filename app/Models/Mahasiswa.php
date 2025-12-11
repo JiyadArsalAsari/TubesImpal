@@ -36,4 +36,9 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(Deadline::class);
     }
+    
+    public function dosenRequests()
+    {
+        return $this->hasMany(DosenMahasiswaRequest::class);
+    }
 }

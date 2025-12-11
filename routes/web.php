@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\LearningDifficultyController;
 use App\Http\Controllers\LearningRecommendationController;
+use App\Http\Controllers\DosenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,19 @@ Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'dashboard'])
     ->middleware('auth')
     ->name('mahasiswa.dashboard');
 
+// Dosen-Mahasiswa Request Routes
+Route::get('/mahasiswa/dosen-requests', [MahasiswaController::class, 'getDosenRequests'])
+    ->middleware('auth')
+    ->name('mahasiswa.dosen.requests');
+    
+Route::post('/mahasiswa/dosen-requests/{id}/accept', [MahasiswaController::class, 'acceptDosenRequest'])
+    ->middleware('auth')
+    ->name('mahasiswa.dosen.requests.accept');
+    
+Route::post('/mahasiswa/dosen-requests/{id}/reject', [MahasiswaController::class, 'rejectDosenRequest'])
+    ->middleware('auth')
+    ->name('mahasiswa.dosen.requests.reject');
+
 // Learning Difficulties Routes
 Route::get('/mahasiswa/learning-difficulties', [LearningDifficultyController::class, 'index'])
     ->middleware('auth')
@@ -46,9 +60,25 @@ Route::post('/mahasiswa/learning-difficulties', [LearningDifficultyController::c
     ->middleware('auth')
     ->name('mahasiswa.learning.difficulties.store');
 
-Route::get('/dosen/dashboard', function () {
-    return 'Dosen Dashboard - Halaman ini hanya bisa diakses oleh dosen';
-})->middleware('auth');
+Route::get('/dosen/dashboard', [DosenController::class, 'dashboard'])
+    ->middleware('auth')
+    ->name('dosen.dashboard');
+
+Route::get('/dosen/search-mahasiswa', [DosenController::class, 'searchMahasiswa'])
+    ->middleware('auth')
+    ->name('dosen.search.mahasiswa');
+
+Route::post('/dosen/request-add-mahasiswa', [DosenController::class, 'requestAddMahasiswa'])
+    ->middleware('auth')
+    ->name('dosen.request.add.mahasiswa');
+
+Route::get('/dosen/mahasiswa/{id}/progress', [DosenController::class, 'viewLearningProgress'])
+    ->middleware('auth')
+    ->name('dosen.mahasiswa.progress');
+
+Route::delete('/dosen/mahasiswa-request/{id}/remove', [DosenController::class, 'removeMahasiswa'])
+    ->middleware('auth')
+    ->name('dosen.mahasiswa.remove');
 
 Route::get('/mahasiswa/learning-recommendation', 
     [LearningRecommendationController::class, 'index'])

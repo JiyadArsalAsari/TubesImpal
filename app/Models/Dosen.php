@@ -21,4 +21,9 @@ class Dosen extends Model
     {
         return $this->belongsTo(User::class);
     }
+    
+    public function mahasiswaRequests()
+    {
+        return $this->hasMany(DosenMahasiswaRequest::class);
+    }
 }

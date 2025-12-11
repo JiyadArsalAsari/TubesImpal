@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
@@ -103,6 +104,38 @@
             display: block;
         }
         
+        /* Dosen Request Notification */
+        .request-notification {
+            background-color: #2d3748;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .request-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-accept {
+            background-color: #48bb78;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .btn-reject {
+            background-color: #f56565;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
         .logo-container {
             cursor: pointer;
         }
@@ -123,7 +156,9 @@
         <div class="mb-4">
             <i class="fa-regular fa-bell text-3xl text-gray-400 mb-3"></i>
             <h3 class="font-bold text-xl mb-2">Notifications</h3>
-            <p class="text-gray-400">Notifications will be displayed here</p>
+            <div id="notificationContent">
+                <p class="text-gray-400">Notifications will be displayed here</p>
+            </div>
         </div>
     </div>
     
@@ -378,6 +413,7 @@
             document.getElementById('bellIcon').addEventListener('click', function(e) {
                 e.stopPropagation();
                 toggleNotificationPopup();
+                loadDosenRequests();
             });
             
             // Add click event to gear icon
@@ -484,6 +520,86 @@
             
             popup.classList.toggle('show');
             overlay.classList.toggle('show');
+        }
+        
+        // Load dosen requests
+        function loadDosenRequests() {
+            fetch('{{ route('mahasiswa.dosen.requests') }}')
+                .then(response => response.json())
+                .then(requests => {
+                    const contentDiv = document.getElementById('notificationContent');
+                    
+                    if (requests.length > 0) {
+                        let html = '';
+                        requests.forEach(request => {
+                            html += `
+                                <div class="request-notification">
+                                    <div>
+                                        <strong>${request.dosen.user.name}</strong> wants to connect with you
+                                    </div>
+                                    <div class="request-actions">
+                                        <button class="btn-accept" onclick="acceptRequest(${request.id})">Accept</button>
+                                        <button class="btn-reject" onclick="rejectRequest(${request.id})">Reject</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        contentDiv.innerHTML = html;
+                    } else {
+                        contentDiv.innerHTML = '<p class="text-gray-400">No pending requests</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading requests:', error);
+                });
+        }
+        
+        // Accept dosen request
+        function acceptRequest(id) {
+            fetch(`/mahasiswa/dosen-requests/${id}/accept`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Request accepted successfully!');
+                    loadDosenRequests();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error accepting request:', error);
+                alert('An error occurred while accepting the request.');
+            });
+        }
+        
+        // Reject dosen request
+        function rejectRequest(id) {
+            fetch(`/mahasiswa/dosen-requests/${id}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Request rejected successfully!');
+                    loadDosenRequests();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error rejecting request:', error);
+                alert('An error occurred while rejecting the request.');
+            });
         }
         
         // Close all popups

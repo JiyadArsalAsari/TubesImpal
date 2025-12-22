@@ -6,6 +6,7 @@ use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\DosenMahasiswaRequest;
 use App\Models\User;
+use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -170,7 +171,7 @@ class DosenController extends Controller
         }
     }
     
-    public function viewLearningProgress($mahasiswaId)
+    public function viewLearningProgress($mahasiswaId, GeminiService $gemini)
     {
         try {
             // Get the authenticated user
@@ -184,13 +185,14 @@ class DosenController extends Controller
             // Get the dosen record
             $dosen = $user->dosen;
             
-            // Check if dosen record exists
+            // Fallback: lanjut dengan user_id bila record dosen belum dibuat
+            $dosenId = $dosen ? $dosen->id : $user->id;
             if (!$dosen) {
-                return redirect('/')->with('error', 'Dosen record not found. Please contact administrator.');
+                Log::warning('Dosen record not found for user ID: ' . $user->id . ' (fallback to user_id)');
             }
             
             // Check if this mahasiswa is connected to this dosen
-            $request = DosenMahasiswaRequest::where('dosen_id', $dosen->id)
+            $request = DosenMahasiswaRequest::where('dosen_id', $dosenId)
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status', 'accepted')
                 ->first();
@@ -202,6 +204,18 @@ class DosenController extends Controller
             // Get the mahasiswa with all related learning data
             $mahasiswa = Mahasiswa::with(['user', 'learningDifficulties', 'schedules', 'deadlines'])
                 ->findOrFail($mahasiswaId);
+                
+            // Generate AI-based learning recommendations for each difficulty
+            $learningRecommendations = [];
+            foreach ($mahasiswa->learningDifficulties as $difficulty) {
+                $learningRecommendations[] = [
+                    'difficulty' => $difficulty,
+                    'ai_result' => $gemini->generateRecommendation(
+                        $difficulty->title ?? $difficulty->subject ?? 'Topik Belajar',
+                        $difficulty->description ?? ''
+                    ),
+                ];
+            }
                 
             // Calculate learning statistics
             $totalDifficulties = $mahasiswa->learningDifficulties->count();
@@ -216,6 +230,7 @@ class DosenController extends Controller
             return view('dosen.learning_progress', compact(
                 'dosen', 
                 'mahasiswa', 
+                'learningRecommendations',
                 'totalDifficulties', 
                 'resolvedDifficulties', 
                 'pendingDifficulties',

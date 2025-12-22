@@ -398,12 +398,13 @@
                     <span class="font-bold text-xl">Deadline</span>
                 </button>
 
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.exercise') }}'">
                     <i class="fa-solid fa-list-check text-2xl"></i>
                     <span class="font-bold text-xl">Exercise</span>
                 </button>
             </div>
         </div>
+
     </div>
 
     <script>
@@ -458,6 +459,7 @@
             modal.classList.remove('hidden');
             loadDeadlineData();
         }
+
         
         function closeDeadlineModal() {
             const modal = document.getElementById('deadlineModal');

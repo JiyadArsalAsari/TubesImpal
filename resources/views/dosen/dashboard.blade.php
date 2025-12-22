@@ -453,6 +453,18 @@
                             View Details
                         </button>
                         
+                        <!-- Create Exercise -->
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                            <button class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
+                                    onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
+                                Buat Assignment
+                            </button>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                                    onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
+                                Buat Quiz
+                            </button>
+                        </div>
+                        
                         <!-- Remove Button -->
                         <form action="{{ route('dosen.mahasiswa.remove', $request->id) }}" method="POST" class="inline-block ml-2" 
                               onsubmit="return confirm('Are you sure you want to remove this student?');">

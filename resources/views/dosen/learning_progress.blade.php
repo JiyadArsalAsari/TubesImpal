@@ -23,8 +23,8 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8">
         <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Learning Progress for {{ $mahasiswa->user->name }}</h2>
-            <p class="text-gray-600">NIM: {{ $mahasiswa->nim }} | Major: {{ $mahasiswa->jurusan }}</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Learning Progress untuk {{ $mahasiswa->user->name }}</h2>
+            <p class="text-gray-600">Identitas mahasiswa dapat dilihat pada halaman profil mahasiswa.</p>
         </div>
 
         <!-- Stats Overview -->
@@ -69,7 +69,7 @@
         <!-- Learning Difficulties Section -->
         <div class="bg-white rounded-lg shadow mb-8">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-800">Learning Difficulties</h3>
+                <h3 class="text-lg font-medium text-gray-800">Learning Difficulties & AI Recommendation</h3>
             </div>
             <div class="p-6">
                 @if($mahasiswa->learningDifficulties->count() > 0)
@@ -81,15 +81,20 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Reported</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Recommendation</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($mahasiswa->learningDifficulties as $difficulty)
+                                @foreach($learningRecommendations as $item)
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $difficulty->subject }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-900">{{ Str::limit($difficulty->description, 50) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ $item['difficulty']->subject ?? $item['difficulty']->title }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">
+                                        {{ Str::limit($item['difficulty']->description, 80) }}
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($difficulty->status == 'resolved')
+                                        @if(($item['difficulty']->status ?? null) === 'resolved')
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 Resolved
                                             </span>
@@ -99,14 +104,19 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $difficulty->created_at->format('M d, Y') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ optional($item['difficulty']->created_at)->format('M d, Y') ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">
+                                        {!! nl2br(e($item['ai_result'])) !!}
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                 @else
-                    <p class="text-gray-500 text-center py-4">No learning difficulties reported yet.</p>
+                    <p class="text-gray-500 text-center py-4">Belum ada learning difficulties yang dilaporkan.</p>
                 @endif
             </div>
         </div>
@@ -124,7 +134,7 @@
                             <h4 class="font-medium text-gray-900">{{ $schedule->title }}</h4>
                             <p class="text-gray-600 text-sm mt-1">{{ $schedule->description }}</p>
                             <div class="mt-2 text-sm text-gray-500">
-                                <p>Date: {{ $schedule->date->format('M d, Y') }}</p>
+                                <p>Date: {{ optional($schedule->date)->format('M d, Y') ?? '-' }}</p>
                                 <p>Time: {{ $schedule->start_time }} - {{ $schedule->end_time }}</p>
                             </div>
                         </div>
@@ -158,7 +168,9 @@
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $deadline->title }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-900">{{ Str::limit($deadline->description, 50) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $deadline->due_date->format('M d, Y') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ optional($deadline->due_date)->format('M d, Y') ?? '-' }}
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($deadline->status == 'completed')
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">

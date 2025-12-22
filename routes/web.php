@@ -5,7 +5,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\LearningDifficultyController;
 use App\Http\Controllers\LearningRecommendationController;
+use App\Http\Controllers\LearningRecommendationDetailController;
 use App\Http\Controllers\DosenController;
+use App\Http\Controllers\ExerciseController;
+use App\Http\Controllers\QuizController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\DeadlineController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,23 +96,53 @@ Route::get('/mahasiswa/learning-recommendation/{id}',
     ->name('mahasiswa.learning.recommendation.detail');
 
 // Schedule Route
-Route::get('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::class, 'index'])
+Route::get('/mahasiswa/schedule', [ScheduleController::class, 'index'])
     ->middleware('auth')
     ->name('mahasiswa.schedule');
-Route::post('/mahasiswa/schedule', [App\Http\Controllers\ScheduleController::class, 'store'])
+Route::post('/mahasiswa/schedule', [ScheduleController::class, 'store'])
     ->middleware('auth')
     ->name('mahasiswa.schedule.store');
-Route::delete('/mahasiswa/schedule/{id}', [App\Http\Controllers\ScheduleController::class, 'destroy'])
+Route::delete('/mahasiswa/schedule/{id}', [ScheduleController::class, 'destroy'])
     ->middleware('auth')
     ->name('mahasiswa.schedule.destroy');
 
 // Deadline Route
-Route::get('/mahasiswa/deadline', [App\Http\Controllers\DeadlineController::class, 'index'])
+Route::get('/mahasiswa/deadline', [DeadlineController::class, 'index'])
     ->middleware('auth')
     ->name('mahasiswa.deadline');
-Route::post('/mahasiswa/deadline', [App\Http\Controllers\DeadlineController::class, 'store'])
+Route::post('/mahasiswa/deadline', [DeadlineController::class, 'store'])
     ->middleware('auth')
     ->name('mahasiswa.deadline.store');
-Route::delete('/mahasiswa/deadline/{id}', [App\Http\Controllers\DeadlineController::class, 'destroy'])
+Route::delete('/mahasiswa/deadline/{id}', [DeadlineController::class, 'destroy'])
     ->middleware('auth')
     ->name('mahasiswa.deadline.destroy');
+
+// Exercise Route
+Route::get('/mahasiswa/exercise', [ExerciseController::class, 'mahasiswaIndex'])
+    ->middleware('auth')
+    ->name('mahasiswa.exercise');
+
+Route::get('/dosen/mahasiswa/{id}/exercise/create', [ExerciseController::class, 'createForMahasiswa'])
+    ->middleware('auth')
+    ->name('dosen.exercise.create');
+
+Route::post('/dosen/mahasiswa/{id}/exercise', [ExerciseController::class, 'storeForMahasiswa'])
+    ->middleware('auth')
+    ->name('dosen.exercise.store');
+
+// Quiz Routes
+Route::get('/dosen/mahasiswa/{id}/quiz/create', [QuizController::class, 'create'])
+    ->middleware('auth')
+    ->name('dosen.quiz.create');
+Route::post('/dosen/mahasiswa/{id}/quiz', [QuizController::class, 'store'])
+    ->middleware('auth')
+    ->name('dosen.quiz.store');
+Route::get('/mahasiswa/quiz/{exerciseId}/attempt', [QuizController::class, 'attempt'])
+    ->middleware('auth')
+    ->name('mahasiswa.quiz.attempt');
+Route::post('/mahasiswa/quiz/{exerciseId}/submit', [QuizController::class, 'submitAttempt'])
+    ->middleware('auth')
+    ->name('mahasiswa.quiz.submit');
+Route::get('/mahasiswa/quiz/{exerciseId}/review', [QuizController::class, 'review'])
+    ->middleware('auth')
+    ->name('mahasiswa.quiz.review');

@@ -146,3 +146,14 @@ Route::post('/mahasiswa/quiz/{exerciseId}/submit', [QuizController::class, 'subm
 Route::get('/mahasiswa/quiz/{exerciseId}/review', [QuizController::class, 'review'])
     ->middleware('auth')
     ->name('mahasiswa.quiz.review');
+
+// Profile Settings Routes
+Route::get('/profile', [AuthController::class, 'profile'])
+    ->middleware('auth')
+    ->name('profile.settings');
+Route::post('/profile', [AuthController::class, 'updateProfile'])
+    ->middleware('auth')
+    ->name('profile.update');
+Route::delete('/profile/photo', [AuthController::class, 'deleteProfilePhoto'])
+    ->middleware('auth')
+    ->name('profile.delete.photo');

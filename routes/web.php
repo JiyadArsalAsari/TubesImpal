@@ -194,3 +194,14 @@ Route::get('/debug/quiz/{id}', function($id) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 })->middleware('auth');
+
+// Profile Settings Routes
+Route::get('/profile', [AuthController::class, 'profile'])
+    ->middleware('auth')
+    ->name('profile.settings');
+Route::post('/profile', [AuthController::class, 'updateProfile'])
+    ->middleware('auth')
+    ->name('profile.update');
+Route::delete('/profile/photo', [AuthController::class, 'deleteProfilePhoto'])
+    ->middleware('auth')
+    ->name('profile.delete.photo');

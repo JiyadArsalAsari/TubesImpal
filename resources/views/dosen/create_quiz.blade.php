@@ -241,7 +241,7 @@
         </div>
         
         <!-- Profile Menu Items -->
-        <div class="profile-item">
+        <div class="profile-item" onclick="window.location.href='{{ route('profile.settings') }}'">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-user-gear"></i>
                 <span>Profile Settings</span>

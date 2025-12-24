@@ -282,16 +282,20 @@
         <!-- User Info -->
         <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-700">
             <div class="bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center">
-                <i class="fa-solid fa-user text-xl"></i>
+                @if(Auth::user() && Auth::user()->profile_picture)
+                    <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_picture) }}" alt="Profile" class="rounded-full w-12 h-12 object-cover">
+                @else
+                    <i class="fa-solid fa-user text-xl"></i>
+                @endif
             </div>
             <div>
-                <p class="font-semibold">{{ Auth::user()->name }}</p>
+                <p class="font-semibold">{{ Auth::user()->username }}</p>
                 <p class="text-sm text-gray-400">{{ Auth::user()->email }}</p>
             </div>
         </div>
         
         <!-- Profile Menu Items -->
-        <div class="profile-item">
+        <div class="profile-item" onclick="window.location.href='{{ route('profile.settings') }}'">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-user-gear"></i>
                 <span>Profile Settings</span>
@@ -342,7 +346,19 @@
     <div class="relative z-10 min-h-screen">
         <!-- HEADER -->
         <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
-            <div class="text-2xl font-bold">{{ Auth::user()->name }}</div>
+            <div class="flex items-center gap-3">
+                @if(Auth::user() && Auth::user()->profile_picture)
+                    <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_picture) }}" alt="Profile" class="rounded-full w-10 h-10 object-cover">
+                @else
+                    <div class="bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                @endif
+                <div>
+                    <div class="font-semibold">{{ Auth::user()->username }}</div>
+                    <div class="text-xs text-gray-400">{{ Auth::user()->role }}</div>
+                </div>
+            </div>
             <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container" onclick="window.location.href='{{ route('dosen.dashboard') }}'">
                 <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
             </div>
@@ -359,7 +375,7 @@
 
         <!-- Greeting -->
         <h2 class="text-center text-3xl font-bold mt-10 mb-8">
-            Halo {{ Auth::user()->name }}, selamat datang di StudyFlow!
+            Halo {{ Auth::user()->username }}, selamat datang di StudyFlow!
         </h2>
             
 

@@ -34,7 +34,11 @@ class ExerciseController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('mahasiswa.exercise', compact('exercises'));
+        $hasCompleted = Exercise::where('mahasiswa_id', $mahasiswa->id)
+            ->where('status', 'completed')
+            ->exists();
+
+        return view('mahasiswa.exercise', compact('exercises', 'hasCompleted'));
     }
 
     /**

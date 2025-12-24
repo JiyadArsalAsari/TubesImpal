@@ -136,6 +136,11 @@
                     </div>
                     <div class="mt-6 flex flex-col items-center gap-3">
                         <button class="text-sm font-semibold text-white underline decoration-dotted">Show More</button>
+                    </div>
+                @endif
+
+                @if($hasCompleted)
+                    <div class="mt-6 flex flex-col items-center gap-3">
                         <button id="showCompletedBtn" class="bg-[#1d8f3b] hover:bg-[#167731] text-white font-semibold px-6 py-3 rounded-full shadow-lg transition">
                             Review Your Completed Quiz and Assignments
                         </button>

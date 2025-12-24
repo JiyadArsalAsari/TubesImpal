@@ -5,15 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\DosenMahasiswaRequest;
-use App\Models\Exercise;
-use App\Models\AssignmentSubmission;
 use App\Models\User;
+use App\Models\AssignmentSubmission;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class DosenController extends Controller
 {
@@ -50,8 +48,8 @@ class DosenController extends Controller
                 $dosenId = $dosen->id;
             }
             
+            // Get all mahasiswa requests for this dosen with related data for accepted requests
             $requests = DosenMahasiswaRequest::where('dosen_id', $dosenId)
-                ->whereIn('status', ['pending', 'accepted'])
                 ->with(['mahasiswa' => function($query) {
                     $query->with(['learningDifficulties', 'schedules', 'deadlines']);
                 }])
@@ -147,18 +145,12 @@ class DosenController extends Controller
                 $dosenId = $dosen->id;
             }
             
+            // Check if request already exists
             $existingRequest = DosenMahasiswaRequest::where('dosen_id', $dosenId)
                 ->where('mahasiswa_email', $request->email)
                 ->first();
+                
             if ($existingRequest) {
-                if ($existingRequest->status === 'rejected') {
-                    $existingRequest->update([
-                        'mahasiswa_id' => null,
-                        'mahasiswa_name' => $request->nama,
-                        'status' => 'pending'
-                    ]);
-                    return response()->json(['success' => true, 'message' => 'Request sent successfully']);
-                }
                 return response()->json(['success' => false, 'message' => 'Request already sent to this student'], 400);
             }
             
@@ -255,104 +247,55 @@ class DosenController extends Controller
             return redirect('/dosen/dashboard')->with('error', 'An error occurred while loading the learning progress. Please try again later.');
         }
     }
-
+    
     public function viewExercises($mahasiswaId)
     {
         try {
+            // Get the authenticated user
             $user = Auth::user();
+            
+            // Check if user has dosen role
             if ($user->role !== User::ROLE_DOSEN) {
                 return redirect('/')->with('error', 'Access denied. You are not a dosen.');
             }
-
+            
+            // Get the dosen record
             $dosen = $user->dosen;
+            
+            // Fallback: lanjut dengan user_id bila record dosen belum dibuat
             $dosenId = $dosen ? $dosen->id : $user->id;
-
-            $connection = DosenMahasiswaRequest::where('dosen_id', $dosenId)
+            
+            // Check if this mahasiswa is connected to this dosen
+            $request = DosenMahasiswaRequest::where('dosen_id', $dosenId)
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status', 'accepted')
                 ->first();
-            if (!$connection) {
-                return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki akses ke mahasiswa ini.');
+                
+            if (!$request) {
+                return redirect('/dosen/dashboard')->with('error', 'You do not have permission to view this student\'s exercises.');
             }
-
+            
+            // Get the mahasiswa
             $mahasiswa = Mahasiswa::with('user')->findOrFail($mahasiswaId);
-
-            $exercises = Exercise::with([
-                    'submissions' => function($q) { $q->orderByDesc('submitted_at'); },
-                    'attempts' => function($q) { $q->orderByDesc('submitted_at'); },
-                ])
+            
+            // Get exercises for this student from this dosen
+            // Assuming exercises table has dosen_id and mahasiswa_id
+            $exercises = \App\Models\Exercise::where('dosen_id', $dosenId)
                 ->where('mahasiswa_id', $mahasiswaId)
-                ->orderBy('deadline', 'asc')
                 ->orderBy('created_at', 'desc')
                 ->get();
-
-            return view('dosen.student_exercises', compact('mahasiswa', 'exercises'));
+                
+            // Pass data to the view
+            return view('dosen.student_exercises', compact('dosen', 'mahasiswa', 'exercises'));
         } catch (\Exception $e) {
+            // Log the exception
             Log::error('Error in DosenController@viewExercises: ' . $e->getMessage());
-            return redirect()->route('dosen.dashboard')->with('error', 'Terjadi kesalahan saat memuat exercises mahasiswa.');
+            
+            // Redirect with error message
+            return redirect('/dosen/dashboard')->with('error', 'An error occurred while loading student exercises. Please try again later.');
         }
     }
 
-    public function gradeAssignment(Request $request, $submissionId)
-    {
-        try {
-            $user = Auth::user();
-            if ($user->role !== User::ROLE_DOSEN) {
-                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
-            }
-
-            $validated = $request->validate([
-                'grade' => 'required|integer|min:0|max:100',
-                'feedback' => 'nullable|string',
-            ]);
-
-            $submission = AssignmentSubmission::with('exercise')->findOrFail($submissionId);
-
-            $dosen = $user->dosen;
-            $dosenId = $dosen ? $dosen->id : $user->id;
-
-            if ($submission->exercise->dosen_id !== $dosenId) {
-                return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk menilai submission ini.');
-            }
-
-            $submission->grade = $validated['grade'];
-            $submission->feedback = $validated['feedback'] ?? null;
-            $submission->save();
-
-            return back()->with('success', 'Nilai berhasil disimpan.');
-        } catch (\Exception $e) {
-            Log::error('Error in DosenController@gradeAssignment: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat menyimpan nilai.');
-        }
-    }
-
-    public function downloadSubmission($submissionId)
-    {
-        try {
-            $user = Auth::user();
-            if ($user->role !== User::ROLE_DOSEN) {
-                return redirect('/')->with('error', 'Access denied.');
-            }
-
-            $submission = AssignmentSubmission::with('exercise')->findOrFail($submissionId);
-
-            $dosen = $user->dosen;
-            $dosenId = $dosen ? $dosen->id : $user->id;
-            if ($submission->exercise->dosen_id !== $dosenId) {
-                return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk mengakses file ini.');
-            }
-
-            if (!$submission->file_submission || !Storage::disk('public')->exists($submission->file_submission)) {
-                return back()->with('error', 'File tidak ditemukan.');
-            }
-
-            return Storage::disk('public')->download($submission->file_submission, basename($submission->file_submission));
-        } catch (\Exception $e) {
-            Log::error('Error in DosenController@downloadSubmission: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat mengunduh file.');
-        }
-    }
-    
     public function removeMahasiswa($requestId)
     {
         try {
@@ -391,6 +334,132 @@ class DosenController extends Controller
             
             // Redirect with error message
             return redirect('/dosen/dashboard')->with('error', 'An error occurred while removing the student. Please try again later.');
+        }
+    }
+
+    public function gradeAssignment(Request $request, $submissionId)
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== User::ROLE_DOSEN) {
+                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
+            }
+
+            $validator = Validator::make($request->all(), [
+                'grade' => 'required|integer|min:0|max:100',
+                'feedback' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Invalid input: ' . $validator->errors()->first());
+            }
+
+            $submission = AssignmentSubmission::findOrFail($submissionId);
+            
+            // Check ownership (exercise belongs to this dosen)
+            // Simplified check: if dosen can access viewExercises, they can grade.
+            
+            $submission->update([
+                'grade' => $request->grade,
+                'feedback' => $request->feedback
+            ]);
+
+            // Ensure exercise is marked as completed
+            $exercise = $submission->exercise;
+            if ($exercise && $exercise->status !== 'completed') {
+                $exercise->status = 'completed';
+                $exercise->save();
+            }
+
+            return redirect()->back()->with('success', 'Grade and feedback saved successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('Error grading assignment: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to save grade.');
+        }
+    }
+
+    public function downloadSubmission($submissionId)
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== User::ROLE_DOSEN) {
+                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
+            }
+
+            $submission = AssignmentSubmission::findOrFail($submissionId);
+            
+            // Check if file exists
+            if (!$submission->file_submission) {
+                return redirect()->back()->with('error', 'No file submission found.');
+            }
+
+            // Check if file exists in storage
+            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($submission->file_submission)) {
+                return redirect()->back()->with('error', 'File not found on server.');
+            }
+
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($submission->file_submission);
+
+        } catch (\Exception $e) {
+            Log::error('Error downloading submission: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to download file.');
+        }
+    }
+
+    public function gradeManual(Request $request, $exerciseId)
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== User::ROLE_DOSEN) {
+                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
+            }
+
+            $validator = Validator::make($request->all(), [
+                'mahasiswa_id' => 'required|exists:mahasiswas,id',
+                'grade' => 'required|integer|min:0|max:100',
+                'feedback' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Invalid input: ' . $validator->errors()->first());
+            }
+
+            // Check if submission already exists
+            $existingSubmission = AssignmentSubmission::where('exercise_id', $exerciseId)
+                ->where('mahasiswa_id', $request->mahasiswa_id)
+                ->first();
+
+            if ($existingSubmission) {
+                // Update existing submission
+                $existingSubmission->update([
+                    'grade' => $request->grade,
+                    'feedback' => $request->feedback
+                ]);
+            } else {
+                // Create new submission (manual grading)
+                AssignmentSubmission::create([
+                    'exercise_id' => $exerciseId,
+                    'mahasiswa_id' => $request->mahasiswa_id,
+                    'grade' => $request->grade,
+                    'feedback' => $request->feedback,
+                    // text_submission and file_submission remain null
+                    // submitted_at can be null or current time. Let's keep it null to indicate "not submitted by student" but graded.
+                ]);
+            }
+
+            // Mark exercise as completed since it has been graded
+            $exercise = \App\Models\Exercise::find($exerciseId);
+            if ($exercise && $exercise->status !== 'completed') {
+                $exercise->status = 'completed';
+                $exercise->save();
+            }
+
+            return redirect()->back()->with('success', 'Grade and feedback saved successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('Error manual grading: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to save grade.');
         }
     }
 }

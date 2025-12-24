@@ -116,11 +116,12 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            color: black;
         }
         
         .profile-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
         }
         
         /* Search Bar Styles */
@@ -178,6 +179,7 @@
             width: 90%;
             max-width: 500px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            color: white;
         }
         
         .close-modal {
@@ -185,15 +187,25 @@
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
+            color: #ccc;
+        }
+        
+        .close-modal:hover {
+            color: white;
         }
         
         .form-input {
             width: 100%;
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid #ccc;
+            border: 1px solid #436040;
             margin-bottom: 15px;
-            background-color: #e6e7d9;
+            background-color: #2f3d2c;
+            color: white;
+        }
+        
+        .form-input::placeholder {
+            color: #aaa;
         }
         
         .btn-primary {
@@ -229,7 +241,7 @@
         /* Autocomplete dropdown */
         .autocomplete-items {
             position: absolute;
-            border: 1px solid #d4d4d4;
+            border: 1px solid #436040;
             border-bottom: none;
             border-top: none;
             z-index: 99;
@@ -244,12 +256,13 @@
         .autocomplete-items div {
             padding: 10px;
             cursor: pointer;
-            background-color: #fff;
-            border-bottom: 1px solid #d4d4d4;
+            background-color: #2f3d2c;
+            border-bottom: 1px solid #436040;
+            color: white;
         }
         
         .autocomplete-items div:hover {
-            background-color: #e9e9e9;
+            background-color: #395035;
         }
         
         .autocomplete-active {
@@ -382,7 +395,7 @@
         <!-- Success/Error Messages -->
         @if(session('success'))
             <div class="max-w-3xl mx-auto px-6 mb-6">
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4" role="alert">
+                <div class="bg-[#2f3d2c] border-l-4 border-green-500 text-green-400 p-4 shadow-md" role="alert">
                     <p>{{ session('success') }}</p>
                 </div>
             </div>
@@ -390,7 +403,7 @@
         
         @if(session('error'))
             <div class="max-w-3xl mx-auto px-6 mb-6">
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                <div class="bg-[#3d2c2c] border-l-4 border-red-500 text-red-400 p-4 shadow-md" role="alert">
                     <p>{{ session('error') }}</p>
                 </div>
             </div>
@@ -399,12 +412,12 @@
         <!-- Search Bar -->
         <div class="max-w-3xl mx-auto px-6 mb-10 relative">
             <div class="relative">
-                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <input 
                     type="text" 
                     id="searchInput"
                     placeholder="Search..." 
-                    class="w-full pl-12 pr-4 py-4 rounded-full bg-white text-gray-700 placeholder-gray-400 focus:outline-none search-bar text-lg"
+                    class="w-full pl-12 pr-4 py-4 rounded-full bg-[#1f2f1f] text-white border border-[#436040] placeholder-gray-400 focus:outline-none focus:border-[#48bb78] search-bar text-lg shadow-lg"
                     onkeyup="searchProfiles()"
                 >
             </div>
@@ -423,7 +436,7 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-xl text-black">{{ $request->mahasiswa_name }}</h3>
-                                <p class="text-gray-700">Mahasiswa S1 Informatika</p>
+                                <p class="text-gray-600">Mahasiswa S1 Informatika</p>
                             </div>
                         </div>
                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
@@ -437,15 +450,11 @@
                     
                     <!-- Learning Progress for Accepted Requests -->
                     @if($request->status == 'accepted' && $request->mahasiswa)
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div class="bg-[#e6e7d9] rounded-xl px-4 py-3 text-center">
-                                <div class="text-xs text-gray-600">Difficulties</div>
-                                <div class="text-xl font-bold text-black">{{ $request->mahasiswa->learningDifficulties->count() }}</div>
-                            </div>
-                            <div class="bg-[#e6e7d9] rounded-xl px-4 py-3 text-center">
-                                <div class="text-xs text-gray-600">Status</div>
-                                <div class="text-sm font-semibold text-black">Connected</div>
+                    <div class="mt-4 pt-4 border-t border-gray-400">
+                        <div class="mb-4">
+                            <div class="bg-[#48bb78] rounded-xl px-4 py-3 text-center border border-[#38a169]">
+                                <div class="text-xs text-white">Status</div>
+                                <div class="text-sm font-semibold text-white">Connected</div>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">

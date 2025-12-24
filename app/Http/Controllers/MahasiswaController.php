@@ -55,39 +55,8 @@ class MahasiswaController extends Controller
             ];
         });
 
-        // Compute next upcoming schedule as fallback when today has none
-        $dayOrder = [
-            'Monday' => 1,
-            'Tuesday' => 2,
-            'Wednesday' => 3,
-            'Thursday' => 4,
-            'Friday' => 5,
-            'Saturday' => 6,
-            'Sunday' => 7
-        ];
-        $todayIndex = $dayOrder[$today] ?? 1;
-        $nextSchedule = $mahasiswa->schedules->sortBy(function ($s) use ($dayOrder, $todayIndex) {
-            $idx = $dayOrder[$s->day] ?? 8;
-            $delta = $idx - $todayIndex;
-            if ($delta < 0) { $delta += 7; }
-            return [$delta, $s->time];
-        })->first();
-
-        // Compute next upcoming deadline as fallback when today has none
-        $nextUpcomingDeadline = $mahasiswa->deadlines
-            ->filter(function ($d) use ($todayDate) { return $d->date >= $todayDate; })
-            ->sortBy(function ($d) { return [$d->date, $d->time]; })
-            ->first();
-
-        $connectedDosenRequests = DosenMahasiswaRequest::where('mahasiswa_id', $mahasiswa->id)
-            ->where('status', 'accepted')
-            ->with('dosen.user')
-            ->get();
-
         // Return the dashboard view
-        return view('mahasiswa.dashboard', compact(
-            'mahasiswa', 'todaysSchedule', 'allTodaysSchedules', 'todaysDeadline', 'allDeadlines', 'nextSchedule', 'nextUpcomingDeadline', 'connectedDosenRequests'
-        ));
+        return view('mahasiswa.dashboard', compact('mahasiswa', 'todaysSchedule', 'allTodaysSchedules', 'todaysDeadline', 'allDeadlines'));
     }
 
     public function content()

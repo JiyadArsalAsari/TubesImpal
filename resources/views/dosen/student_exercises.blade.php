@@ -101,17 +101,17 @@
 
         <div class="max-w-6xl mx-auto px-6 py-10">
             @if(session('success'))
-                <div class="mb-4 bg-green-100 text-green-800 border border-green-300 rounded-xl px-4 py-3">{{ session('success') }}</div>
+                <div class="mb-4 bg-[#2f3d2c] text-green-400 border border-green-500 rounded-xl px-4 py-3 shadow-md">{{ session('success') }}</div>
             @endif
             @if(session('error'))
-                <div class="mb-4 bg-red-100 text-red-800 border border-red-300 rounded-xl px-4 py-3">{{ session('error') }}</div>
+                <div class="mb-4 bg-[#3d2c2c] text-red-400 border border-red-500 rounded-xl px-4 py-3 shadow-md">{{ session('error') }}</div>
             @endif
             <div class="mb-6">
                 <p class="text-sm text-gray-300">Mahasiswa</p>
                 <h1 class="text-3xl font-bold">{{ $mahasiswa->nama }} ({{ $mahasiswa->user->email }})</h1>
             </div>
 
-            <div class="bg-white text-black rounded-3xl shadow-xl p-8 border border-gray-200">
+            <div class="bg-[#395035] text-white rounded-3xl shadow-xl p-8 border border-[#436040]">
                 @php
                     $grouped = $exercises->groupBy(function ($item) {
                         return optional($item->deadline)?->format('l, d F Y') ?? 'Tanpa Deadline';
@@ -119,30 +119,30 @@
                 @endphp
 
                 @if($exercises->count() === 0)
-                    <p class="text-center text-gray-600">Belum ada exercise untuk mahasiswa ini.</p>
+                    <p class="text-center text-gray-400">Belum ada exercise untuk mahasiswa ini.</p>
                 @else
                     <div class="space-y-8">
                         @foreach($grouped as $date => $items)
                             <div>
-                                <p class="text-sm text-gray-600 uppercase tracking-wide mb-3">{{ $date }}</p>
+                                <p class="text-sm text-gray-300 uppercase tracking-wide mb-3">{{ $date }}</p>
                                 <div class="space-y-4">
                                     @foreach($items as $item)
                                         @php
                                             $latestAttempt = $item->attempts->first();
                                             $latestSubmission = $item->submissions->first();
                                         @endphp
-                                        <div class="bg-[#f4f5ef] rounded-2xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 border border-[#d6d7c9] shadow-lg">
+                                        <div class="bg-[#2f3d2c] rounded-2xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 border border-[#436040] shadow-lg">
                                             <div class="flex items-start gap-3">
-                                                <div class="bg-[#1f2f1f] text-white rounded-xl px-3 py-2 text-xs font-semibold uppercase">
+                                                <div class="bg-[#1f2f1f] text-white rounded-xl px-3 py-2 text-xs font-semibold uppercase border border-[#436040]">
                                                     {{ strtoupper($item->type) }}
                                                 </div>
                                                 <div>
-                                                    <p class="font-bold text-lg">{{ $item->title }}</p>
-                                                    <p class="text-xs text-gray-700 mt-1">
+                                                    <p class="font-bold text-lg text-white">{{ $item->title }}</p>
+                                                    <p class="text-xs text-gray-300 mt-1">
                                                         Deadline: {{ optional($item->deadline)?->format('H:i') ?? '—' }}
                                                     </p>
                                                     @if($item->description)
-                                                        <p class="text-xs text-gray-700 mt-1">{{ \Illuminate\Support\Str::limit($item->description, 120) }}</p>
+                                                        <p class="text-xs text-gray-300 mt-1">{{ \Illuminate\Support\Str::limit($item->description, 120) }}</p>
                                                     @endif
                                                     <div class="mt-2">
                                                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $item->status === 'completed' ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white' }}">
@@ -155,70 +155,82 @@
                                             <div class="flex-1">
                                                 @if($item->type === 'quiz')
                                                     @if($latestAttempt)
-                                                        <div class="bg-white border border-gray-200 rounded-xl p-3">
-                                                            <p class="text-sm">Skor terakhir: <span class="font-bold">{{ $latestAttempt->score }} / 100</span></p>
+                                                        <div class="bg-[#1f2f1f] border border-[#436040] rounded-xl p-3">
+                                                            <p class="text-sm text-gray-300">Skor terakhir: <span class="font-bold text-white">{{ $latestAttempt->score }} / 100</span></p>
                                                             @if($latestAttempt->submitted_at)
-                                                                <p class="text-xs text-gray-600">Dikumpulkan: {{ $latestAttempt->submitted_at->format('d M Y H:i') }}</p>
+                                                                <p class="text-xs text-gray-400">Dikumpulkan: {{ $latestAttempt->submitted_at->format('d M Y H:i') }}</p>
                                                             @endif
                                                         </div>
                                                     @else
-                                                        <p class="text-sm text-gray-600">Belum dikerjakan.</p>
+                                                        <div class="bg-[#1f2f1f] border border-[#436040] rounded-xl p-3">
+                                                            <p class="text-sm text-gray-400 mb-2">Belum dikerjakan.</p>
+                                                            <div class="mt-2 border-t border-[#436040] pt-2">
+                                                                <p class="text-sm font-semibold text-white">Input Nilai Manual</p>
+                                                                <form action="{{ route('dosen.assignment.grade_manual', $item->id) }}" method="POST" class="mt-2 flex flex-col md:flex-row gap-2 items-start md:items-center">
+                                                                    @csrf
+                                                                    <input type="hidden" name="mahasiswa_id" value="{{ $mahasiswa->id }}">
+                                                                    <input type="number" name="grade" min="0" max="100" class="rounded-lg bg-[#2f3d2c] border border-[#436040] text-white p-2 w-24 placeholder-gray-400" placeholder="Nilai" required>
+                                                                    <textarea name="feedback" rows="2" class="rounded-lg bg-[#2f3d2c] border border-[#436040] text-white p-2 flex-1 placeholder-gray-400" placeholder="Feedback (opsional)"></textarea>
+                                                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">Simpan</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
                                                     @endif
                                                 @else
                                                     @if($latestSubmission)
-                                                        <div class="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+                                                        <div class="bg-[#1f2f1f] border border-[#436040] rounded-xl p-3 space-y-2">
                                                             @if($latestSubmission->submitted_at)
-                                                                <p class="text-xs text-gray-600">Dikumpulkan: {{ $latestSubmission->submitted_at->format('d M Y H:i') }}</p>
+                                                                <p class="text-xs text-gray-400">Dikumpulkan: {{ $latestSubmission->submitted_at->format('d M Y H:i') }}</p>
                                                             @endif
                                                             <div class="flex flex-wrap gap-2 items-center">
-                                                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $latestSubmission->text_submission ? 'bg-blue-600 text-white' : 'bg-gray-400 text-white' }}">
+                                                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $latestSubmission->text_submission ? 'bg-blue-600 text-white' : 'bg-gray-600 text-white' }}">
                                                                     {{ $latestSubmission->text_submission ? 'TEXT SUBMITTED' : 'NO TEXT' }}
                                                                 </span>
-                                                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $latestSubmission->file_submission ? 'bg-purple-600 text-white' : 'bg-gray-400 text-white' }}">
+                                                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $latestSubmission->file_submission ? 'bg-purple-600 text-white' : 'bg-gray-600 text-white' }}">
                                                                     {{ $latestSubmission->file_submission ? 'FILE SUBMITTED' : 'NO FILE' }}
                                                                 </span>
                                                             </div>
                                                             @if($latestSubmission->text_submission)
-                                                                <p class="text-sm mt-2">Jawaban Teks: <span class="text-gray-700">{{ \Illuminate\Support\Str::limit($latestSubmission->text_submission, 160) }}</span></p>
+                                                                <p class="text-sm mt-2 text-gray-300">Jawaban Teks: <span class="text-white">{{ \Illuminate\Support\Str::limit($latestSubmission->text_submission, 160) }}</span></p>
                                                             @endif
                                                             @if($latestSubmission->file_submission)
-                                                                <a href="{{ route('dosen.assignment.download', $latestSubmission->id) }}" class="inline-flex items-center gap-2 text-blue-600 text-sm font-semibold">
+                                                                <a href="{{ route('dosen.assignment.download', $latestSubmission->id) }}" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-semibold transition-colors">
                                                                     <i class="fa-solid fa-download"></i>
                                                                     Download File Jawaban
                                                                 </a>
                                                             @endif
 
                                                             <div class="mt-3">
-                                                                <p class="text-sm font-semibold">Penilaian</p>
+                                                                <p class="text-sm font-semibold text-white">Penilaian</p>
                                                                 @if(!is_null($latestSubmission->grade))
                                                                     <div id="gradeDisplay-{{ $latestSubmission->id }}" class="space-y-1">
-                                                                        <p class="text-sm">Nilai: <span class="font-bold">{{ $latestSubmission->grade }}</span></p>
+                                                                        <p class="text-sm text-gray-300">Nilai: <span class="font-bold text-white">{{ $latestSubmission->grade }}</span></p>
                                                                         @if($latestSubmission->feedback)
-                                                                            <p class="text-sm">Feedback: <span class="text-gray-700">{{ $latestSubmission->feedback }}</span></p>
+                                                                            <p class="text-sm text-gray-300">Feedback: <span class="text-white">{{ $latestSubmission->feedback }}</span></p>
                                                                         @endif
-                                                                        <button type="button" onclick="toggleGradeForm({{ $latestSubmission->id }}, true)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-full">Edit</button>
+                                                                        <button type="button" onclick="toggleGradeForm({{ $latestSubmission->id }}, true)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-full transition-colors">Edit</button>
                                                                     </div>
                                                                     <form id="gradeForm-{{ $latestSubmission->id }}" action="{{ route('dosen.assignment.grade', $latestSubmission->id) }}" method="POST" class="mt-2 flex flex-col md:flex-row gap-2 items-start md:items-center hidden">
                                                                         @csrf
-                                                                        <input type="number" name="grade" min="0" max="100" class="rounded-lg border p-2 w-24" placeholder="Nilai" value="{{ $latestSubmission->grade ?? '' }}" required>
-                                                                        <textarea name="feedback" rows="2" class="rounded-lg border p-2 flex-1" placeholder="Feedback (opsional)">{{ $latestSubmission->feedback ?? '' }}</textarea>
+                                                                        <input type="number" name="grade" min="0" max="100" class="rounded-lg bg-[#2f3d2c] border border-[#436040] text-white p-2 w-24 placeholder-gray-400" placeholder="Nilai" value="{{ $latestSubmission->grade ?? '' }}" required>
+                                                                        <textarea name="feedback" rows="2" class="rounded-lg bg-[#2f3d2c] border border-[#436040] text-white p-2 flex-1 placeholder-gray-400" placeholder="Feedback (opsional)">{{ $latestSubmission->feedback ?? '' }}</textarea>
                                                                         <div class="flex gap-2">
-                                                                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full">Simpan</button>
-                                                                            <button type="button" onclick="toggleGradeForm({{ $latestSubmission->id }}, false)" class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full">Batal</button>
+                                                                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">Simpan</button>
+                                                                            <button type="button" onclick="toggleGradeForm({{ $latestSubmission->id }}, false)" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">Batal</button>
                                                                         </div>
                                                                     </form>
                                                                 @else
                                                                     <form action="{{ route('dosen.assignment.grade', $latestSubmission->id) }}" method="POST" class="mt-2 flex flex-col md:flex-row gap-2 items-start md:items-center">
                                                                         @csrf
-                                                                        <input type="number" name="grade" min="0" max="100" class="rounded-lg border p-2 w-24" placeholder="Nilai" required>
-                                                                        <textarea name="feedback" rows="2" class="rounded-lg border p-2 flex-1" placeholder="Feedback (opsional)"></textarea>
-                                                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full">Simpan</button>
+                                                                        <input type="number" name="grade" min="0" max="100" class="rounded-lg bg-[#2f3d2c] border border-[#436040] text-white p-2 w-24 placeholder-gray-400" placeholder="Nilai" required>
+                                                                        <textarea name="feedback" rows="2" class="rounded-lg bg-[#2f3d2c] border border-[#436040] text-white p-2 flex-1 placeholder-gray-400" placeholder="Feedback (opsional)"></textarea>
+                                                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">Simpan</button>
                                                                     </form>
                                                                 @endif
                                                             </div>
                                                         </div>
                                                     @else
-                                                        <p class="text-sm text-gray-600">Belum dikerjakan.</p>
+                                                        <p class="text-sm text-gray-400">Belum dikerjakan.</p>
                                                     @endif
                                                 @endif
                                             </div>

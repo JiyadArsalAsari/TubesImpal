@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learning Progress - {{ $mahasiswa->user->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         .profile-popup { display: none; position: absolute; top: 60px; right: 20px; background-color: #1f2f1f; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 250px; padding: 20px; }
         .profile-popup.show { display: block; }
@@ -23,12 +23,20 @@
     </style>
 </head>
 <body class="bg-[#4b5b3b] text-white font-sans relative overflow-x-hidden">
+    <!-- Decorative Line Background -->
     <div class="fixed inset-0 z-0 overflow-hidden">
         <img src="{{ asset('line.png') }}" alt="Decorative Line" class="w-full h-full object-cover opacity-10 scale-150">
     </div>
+
     <div class="relative z-10 min-h-screen">
+        <!-- Header -->
         <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
-            <div class="text-2xl font-bold">{{ Auth::user()->name }}</div>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('dosen.dashboard') }}" class="text-gray-300 hover:text-white transition-colors">
+                    <i class="fa-solid fa-arrow-left text-xl"></i>
+                </a>
+                <div class="text-2xl font-bold">{{ Auth::user()->name }}</div>
+            </div>
             <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container" onclick="window.location.href='{{ route('dosen.dashboard') }}'">
                 <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
             </div>
@@ -42,7 +50,10 @@
                 </div>
             </div>
         </header>
+
+        <!-- Popups -->
         <div class="popup-overlay" id="popupOverlay" onclick="closeAllPopups()"></div>
+        
         <div class="notification-popup" id="notificationPopup">
             <div class="mb-4">
                 <i class="fa-regular fa-bell text-3xl text-gray-400 mb-3"></i>
@@ -50,6 +61,7 @@
                 <p class="text-gray-400">Notifications will be displayed here</p>
             </div>
         </div>
+
         <div class="profile-popup" id="profilePopup">
             <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-700">
                 <div class="bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center">
@@ -99,143 +111,173 @@
             </div>
         </div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold mb-2">Learning Progress untuk {{ $mahasiswa->user->name }}</h2>
-        </div>
+        <main class="max-w-7xl mx-auto px-6 py-10">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-white mb-2">Learning Progress untuk {{ $mahasiswa->user->name }}</h2>
+                <p class="text-gray-300">Identitas mahasiswa dapat dilihat pada halaman profil mahasiswa.</p>
+            </div>
 
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white text-black rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-blue-100 p-3 mr-4">
-                        <i class="fas fa-book text-blue-500 text-xl"></i>
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-[#395035] rounded-2xl p-6 shadow-lg border border-[#436040]">
+                    <div class="flex items-center">
+                        <div class="rounded-full bg-[#2f3d2c] p-3 mr-4 border border-[#436040]">
+                            <i class="fas fa-book text-blue-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Learning Difficulties</p>
+                            <p class="text-2xl font-bold text-white">{{ $mahasiswa->learningDifficulties->count() }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Total Learning Difficulties</p>
-                        <p class="text-2xl font-bold">{{ $mahasiswa->learningDifficulties->count() }}</p>
+                </div>
+
+                <div class="bg-[#395035] rounded-2xl p-6 shadow-lg border border-[#436040]">
+                    <div class="flex items-center">
+                        <div class="rounded-full bg-[#2f3d2c] p-3 mr-4 border border-[#436040]">
+                            <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-300 text-sm">Resolved Difficulties</p>
+                            <p class="text-2xl font-bold text-white">{{ $mahasiswa->learningDifficulties->where('status', 'resolved')->count() }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#395035] rounded-2xl p-6 shadow-lg border border-[#436040]">
+                    <div class="flex items-center">
+                        <div class="rounded-full bg-[#2f3d2c] p-3 mr-4 border border-[#436040]">
+                            <i class="fas fa-clock text-yellow-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-300 text-sm">Pending Difficulties</p>
+                            <p class="text-2xl font-bold text-white">{{ $mahasiswa->learningDifficulties->where('status', '!=', 'resolved')->count() }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white text-black rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-green-100 p-3 mr-4">
-                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Resolved Difficulties</p>
-                        <p class="text-2xl font-bold">{{ $mahasiswa->learningDifficulties->where('status', 'resolved')->count() }}</p>
-                    </div>
+            <!-- Learning Difficulties Section -->
+            <div class="bg-[#395035] rounded-2xl shadow-lg border border-[#436040] mb-8 overflow-hidden">
+                <div class="px-6 py-4 border-b border-[#436040] bg-[#2f3d2c]">
+                    <h3 class="text-lg font-medium text-white">Learning Difficulties & AI Recommendation</h3>
+                </div>
+                <div class="p-6">
+                    @if($mahasiswa->learningDifficulties->count() > 0)
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-[#436040]">
+                                <thead class="bg-[#2f3d2c]">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Subject</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Description</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date Reported</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">AI Recommendation</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-[#395035] divide-y divide-[#436040]">
+                                    @foreach($learningRecommendations as $item)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-medium">
+                                            {{ $item['difficulty']->subject ?? $item['difficulty']->title }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-300">
+                                            {{ Str::limit($item['difficulty']->description, 80) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if(($item['difficulty']->status ?? null) === 'resolved')
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-900 text-green-200 border border-green-700">
+                                                    Resolved
+                                                </span>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-200 border border-yellow-700">
+                                                    Pending
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                            {{ optional($item['difficulty']->created_at)->format('M d, Y') ?? '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-300">
+                                            {!! nl2br(e($item['ai_result'])) !!}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-gray-400 text-center py-4">Belum ada learning difficulties yang dilaporkan.</p>
+                    @endif
                 </div>
             </div>
 
-            <div class="bg-white text-black rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-yellow-100 p-3 mr-4">
-                        <i class="fas fa-clock text-yellow-500 text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Pending Difficulties</p>
-                        <p class="text-2xl font-bold">{{ $mahasiswa->learningDifficulties->where('status', '!=', 'resolved')->count() }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Learning Difficulties Section -->
-        <div class="bg-white text-black rounded-lg shadow mb-8">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-800">Learning Difficulties & AI Recommendation</h3>
-            </div>
-            <div class="p-6">
-                @if($mahasiswa->learningDifficulties->count() > 0)
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-black">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Reported</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Recommendation</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($learningRecommendations as $item)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ $item['difficulty']->subject ?? $item['difficulty']->title }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-900">
-                                        {{ Str::limit($item['difficulty']->description, 80) }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if(($item['difficulty']->status ?? null) === 'resolved')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Resolved
-                                            </span>
-                                        @else
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                Pending
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ optional($item['difficulty']->created_at)->format('M d, Y') ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-900">
-                                        {!! nl2br(e($item['ai_result'])) !!}
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <p class="text-gray-600 text-center py-4">Belum ada learning difficulties yang dilaporkan.</p>
-                @endif
-            </div>
-        </div>
-
-        
-    </main>
+        </main>
     </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const bell = document.getElementById('bellIcon');
-            const gear = document.getElementById('gearIcon');
-            if (bell) { bell.addEventListener('click', function(e) { e.stopPropagation(); toggleNotificationPopup(); }); }
-            if (gear) { gear.addEventListener('click', function(e) { e.stopPropagation(); toggleProfilePopup(); }); }
-        });
         function toggleProfilePopup() {
-            document.getElementById('notificationPopup').classList.remove('show');
             const popup = document.getElementById('profilePopup');
             const overlay = document.getElementById('popupOverlay');
-            popup.classList.toggle('show');
-            overlay.classList.toggle('show');
-            if (!popup.classList.contains('show')) { document.getElementById('languageMenu').classList.remove('show'); }
+            
+            if (popup.classList.contains('show')) {
+                popup.classList.remove('show');
+                overlay.classList.remove('show');
+            } else {
+                // Close other popups
+                document.getElementById('notificationPopup').classList.remove('show');
+                
+                popup.classList.add('show');
+                overlay.classList.add('show');
+            }
         }
+        
         function toggleNotificationPopup() {
-            document.getElementById('profilePopup').classList.remove('show');
             const popup = document.getElementById('notificationPopup');
             const overlay = document.getElementById('popupOverlay');
-            popup.classList.toggle('show');
-            overlay.classList.toggle('show');
+            
+            if (popup.classList.contains('show')) {
+                popup.classList.remove('show');
+                overlay.classList.remove('show');
+            } else {
+                // Close other popups
+                document.getElementById('profilePopup').classList.remove('show');
+                
+                popup.classList.add('show');
+                overlay.classList.add('show');
+            }
         }
+        
         function closeAllPopups() {
             document.getElementById('profilePopup').classList.remove('show');
             document.getElementById('notificationPopup').classList.remove('show');
-            document.getElementById('languageMenu').classList.remove('show');
             document.getElementById('popupOverlay').classList.remove('show');
         }
-        function toggleLanguageMenu() { const languageMenu = document.getElementById('languageMenu'); languageMenu.classList.toggle('show'); }
-        document.addEventListener('click', function(event) {
-            const profilePopup = document.getElementById('profilePopup');
-            const notificationPopup = document.getElementById('notificationPopup');
-            const bellIcon = document.getElementById('bellIcon');
+        
+        function toggleLanguageMenu() {
+            const menu = document.getElementById('languageMenu');
+            menu.classList.toggle('show');
+        }
+        
+        // Add event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gear icon click
             const gearIcon = document.getElementById('gearIcon');
-            if (!profilePopup.contains(event.target) && !notificationPopup.contains(event.target) && !bellIcon.contains(event.target) && !gearIcon.contains(event.target) && (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) { closeAllPopups(); }
+            if (gearIcon) {
+                gearIcon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleProfilePopup();
+                });
+            }
+            
+            // Bell icon click
+            const bellIcon = document.getElementById('bellIcon');
+            if (bellIcon) {
+                bellIcon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleNotificationPopup();
+                });
+            }
         });
     </script>
 </body>

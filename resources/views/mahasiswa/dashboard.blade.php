@@ -216,33 +216,6 @@
                 </div>
             </div>
         </div>
-        
-        <div class="profile-divider"></div>
-        
-        @if(isset($connectedDosenRequests))
-        @if($connectedDosenRequests->count() > 0)
-        <div class="profile-item">
-            <span class="text-sm text-gray-300">Dosen Terhubung</span>
-        </div>
-        @foreach($connectedDosenRequests as $req)
-        <div class="profile-item">
-            <div class="flex items-center gap-3">
-                <div class="bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center">
-                    <i class="fa-solid fa-user-tie text-sm"></i>
-                </div>
-                <div>
-                    <p class="font-semibold">{{ optional($req->dosen->user)->name ?? $req->dosen->nama }}</p>
-                    <p class="text-xs text-gray-400">{{ optional($req->dosen->user)->email }}</p>
-                </div>
-            </div>
-        </div>
-        @endforeach
-        @else
-        <div class="profile-item">
-            <span class="text-sm text-gray-400">Belum ada dosen terhubung</span>
-        </div>
-        @endif
-        @endif
 
         <!-- Logout -->
         <div class="profile-item" onclick="window.location.href='{{ route('logout') }}'">
@@ -253,7 +226,7 @@
         </div>
     </div>
 
-    <div class="relative z-10 min-h-screen">
+    <div class="relative z-10 min-h-screen flex flex-col">
         <!-- HEADER -->
         <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
             <div class="flex items-center gap-3">
@@ -283,238 +256,182 @@
             </div>
         </header>
 
-        <!-- Greeting -->
-        <h2 class="text-center text-3xl font-bold mt-10 mb-12">
-            Hello {{ Auth::user()->username }}, Welcome Back To StudyFlow!
-        </h2>
-
-        <!-- Cards Section -->
-        <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
-            <!-- Schedule Card -->
-            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center cursor-pointer" onclick="openScheduleModal()">
-                <div class="flex items-center gap-4 mb-4">
-                    <i class="fa-regular fa-calendar text-2xl"></i>
-                    <span class="font-bold text-xl">Your Schedule Today</span>
-                </div>
-                @if($todaysSchedule)
-                    <p class="font-bold text-xl mb-2 text-black">{{ $todaysSchedule->subject_name }}</p>
-                    <p class="text-lg text-black">{{ $todaysSchedule->room }} — {{ $todaysSchedule->time }}</p>
-                @elseif(isset($nextSchedule) && $nextSchedule)
-                    <p class="font-bold text-xl mb-2 text-black">Next: {{ $nextSchedule->subject_name }}</p>
-                    <p class="text-lg text-black">{{ $nextSchedule->day }} — {{ $nextSchedule->room }} — {{ $nextSchedule->time }}</p>
-                @else
-                    <p class="font-bold text-xl mb-2 text-black">No schedules available</p>
-                @endif
+        <main class="flex-grow flex flex-col justify-center w-full gap-16 pb-12 mt-8">
+            <!-- Greeting -->
+            <div class="text-center w-full px-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-white tracking-wide drop-shadow-md">
+                    Hello {{ $mahasiswa->nama ?? Auth::user()->username }}, Welcome Back To StudyFlow!
+                </h1>
             </div>
 
-            <!-- Hidden schedule data for modal -->
-            <div id="scheduleItems" class="hidden">
-                @if(isset($allTodaysSchedules))
-                    @if($allTodaysSchedules->count() > 0)
+            <!-- Cards Section -->
+            <div class="max-w-5xl mx-auto px-6 w-full flex flex-col gap-20">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <!-- Schedule Card -->
+                    <div class="bg-[#e6e7d9] text-black rounded-3xl p-8 w-full shadow-xl flex flex-col items-center text-center cursor-pointer transform transition-transform hover:scale-105" onclick="openScheduleModal()">
+                        <div class="flex items-center gap-4 mb-4">
+                            <i class="fa-regular fa-calendar text-2xl"></i>
+                            <span class="font-bold text-xl">Your Schedule Today</span>
+                        </div>
+                        @if($todaysSchedule)
+                            <p class="font-bold text-xl mb-2 text-black">{{ $todaysSchedule->subject_name }}</p>
+                            <p class="text-lg text-black">{{ $todaysSchedule->room }} — {{ $todaysSchedule->time }}</p>
+                        @elseif(isset($nextSchedule) && $nextSchedule)
+                            <p class="font-bold text-xl mb-2 text-black">Next: {{ $nextSchedule->subject_name }}</p>
+                            <p class="text-lg text-black">{{ $nextSchedule->day }} — {{ $nextSchedule->room }} — {{ $nextSchedule->time }}</p>
+                        @else
+                            <p class="font-bold text-xl mb-2 text-black">No schedule for today</p>
+                        @endif
+                    </div>
+
+                    <!-- Deadline Card -->
+                    <div class="bg-[#e6e7d9] text-black rounded-3xl p-8 w-full shadow-xl flex flex-col items-center text-center cursor-pointer transform transition-transform hover:scale-105" onclick="openDeadlineModal()">
+                        <div class="flex items-center gap-4 mb-4">
+                            <i class="fa-solid fa-clock text-2xl"></i>
+                            <span class="font-bold text-xl">Your Deadline Today</span>
+                        </div>
+                        @if($todaysDeadline)
+                            <p class="font-bold text-xl mb-2 text-black">{{ $todaysDeadline->subject_name }}</p>
+                            <p class="text-lg text-black">{{ $todaysDeadline->time }}</p>
+                        @elseif(isset($nextUpcomingDeadline) && $nextUpcomingDeadline)
+                            <p class="font-bold text-xl mb-2 text-black">Next: {{ $nextUpcomingDeadline->subject_name }}</p>
+                            <p class="text-lg text-black">{{ $nextUpcomingDeadline->date }} — {{ $nextUpcomingDeadline->time }}</p>
+                        @else
+                            <p class="font-bold text-xl mb-2 text-black">No deadline for today</p>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Hidden schedule data for modal -->
+                <div id="scheduleItems" class="hidden">
+                    @if(isset($allTodaysSchedules) && $allTodaysSchedules->count() > 0)
                         @foreach($allTodaysSchedules as $schedule)
-                            <div class="bg-white rounded-2xl p-6 mb-4 shadow-md">
-                                <h3 class="font-bold text-xl mb-2 text-black">{{ $schedule->subject_name }}</h3>
-                                <div class="flex justify-between text-black">
+                            <div class="mb-4 border-b border-gray-300 pb-2">
+                                <p class="font-bold text-lg text-black">{{ $schedule->subject_name }}</p>
+                                <div class="flex justify-between text-sm text-black">
                                     <div>
                                         <p class="font-semibold">Room</p>
-                                        <p>{{ $schedule->room }}</p>
+                                        <p class="text-xs">{{ $schedule->room }}</p>
                                     </div>
                                     <div>
                                         <p class="font-semibold">Time</p>
-                                        <p>{{ $schedule->time }}</p>
+                                        <p class="text-xs">{{ $schedule->time }}</p>
                                     </div>
                                 </div>
                             </div>
                         @endforeach
                     @else
+                        <p class="text-black text-center py-8">No schedules for today.</p>
+                    @endif
+                </div>
+                
+                <!-- Hidden deadline data for modal -->
+                <div id="deadlineItems" class="hidden">
+                    @if(isset($allDeadlines))
                         @php
-                            $dayOrder = ['Monday'=>1,'Tuesday'=>2,'Wednesday'=>3,'Thursday'=>4,'Friday'=>5,'Saturday'=>6,'Sunday'=>7];
-                            $todayName = now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->format('l');
-                            $todayIndex = $dayOrder[$todayName] ?? 1;
-                            $upcomingSchedules = $mahasiswa->schedules->sortBy(function ($s) use ($dayOrder, $todayIndex) {
-                                $idx = $dayOrder[$s->day] ?? 8;
-                                $delta = $idx - $todayIndex;
-                                if ($delta < 0) { $delta += 7; }
-                                return [$delta, $s->time];
+                            $todayDate = now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->toDateString();
+                            $todaysDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
+                                return $deadline->date === $todayDate;
+                            });
+                            $upcomingDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
+                                return $deadline->date >= $todayDate;
                             })->take(5);
                         @endphp
-                        @if($upcomingSchedules->count() > 0)
-                            <div class="text-black">
-                                <h3 class="font-bold text-xl mb-4">Upcoming Schedules</h3>
-                                @foreach($upcomingSchedules as $schedule)
-                                    <div class="bg-white rounded-2xl p-6 mb-4 shadow-md border border-gray-200">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-semibold text-black">{{ $schedule->subject_name }}</h4>
-                                            <span class="bg-[#233122] text-white text-xs px-2 py-1 rounded-full">{{ $schedule->day }}</span>
+                        @if($todaysDeadlines->count() > 0)
+                            @foreach($todaysDeadlines as $deadline)
+                                <div class="mb-4 border-b border-gray-300 pb-2">
+                                    <p class="font-bold text-lg text-black">{{ $deadline->subject_name }}</p>
+                                    <div class="flex justify-between text-sm text-black">
+                                        <div>
+                                            <p class="font-semibold">Date</p>
+                                            <p class="text-xs">{{ $deadline->date }}</p>
                                         </div>
-                                        <div class="flex justify-between text-sm text-black">
-                                            <div>
-                                                <p class="font-semibold">Room</p>
-                                                <p class="text-xs">{{ $schedule->room }}</p>
-                                            </div>
-                                            <div>
-                                                <p class="font-semibold">Time</p>
-                                                <p class="text-xs">{{ $schedule->time }}</p>
-                                            </div>
+                                        <div>
+                                            <p class="font-semibold">Time</p>
+                                            <p class="text-xs">{{ $deadline->time }}</p>
                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-black text-center py-8">No schedules available.</p>
-                        @endif
-                    @endif
-                @else
-                    <p class="text-black text-center py-8">No schedules available.</p>
-                @endif
-            </div>
-            
-            <!-- Hidden deadline data for modal -->
-            <div id="deadlineItems" class="hidden">
-                @if(isset($allDeadlines))
-                    @php
-                        $todayDate = now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->toDateString();
-                        $todaysDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
-                            return $deadline->date === $todayDate;
-                        });
-                        $upcomingDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
-                            return $deadline->date >= $todayDate;
-                        })->take(5);
-                    @endphp
-                    @if($todaysDeadlines->count() > 0)
-                        @foreach($todaysDeadlines as $deadline)
-                            <div class="bg-white rounded-2xl p-6 mb-4 shadow-md">
-                                <h3 class="font-bold text-xl mb-2 text-black">{{ $deadline->subject_name }}</h3>
-                                <div class="flex justify-between text-black">
-                                    <div>
-                                        <p class="font-semibold">Date</p>
-                                        <p>{{ $deadline->date }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold">Time</p>
-                                        <p>{{ $deadline->time }}</p>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
-                    @else
-                        @if($upcomingDeadlines->count() > 0)
-                            <div class="text-black">
-                                <h3 class="font-bold text-xl mb-4">Upcoming Deadlines</h3>
-                                @foreach($upcomingDeadlines as $deadline)
-                                    <div class="bg-white rounded-2xl p-6 mb-4 shadow-md border border-gray-200">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-semibold text-black">{{ $deadline->subject_name }}</h4>
-                                            <span class="bg-[#233122] text-white text-xs px-2 py-1 rounded-full">{{ $deadline->day }}</span>
-                                        </div>
-                                        <div class="flex justify-between text-sm text-black">
-                                            <div>
-                                                <p class="font-semibold">Date</p>
-                                                <p class="text-xs">{{ $deadline->date }}</p>
-                                            </div>
-                                            <div>
-                                                <p class="font-semibold">Time</p>
-                                                <p class="text-xs">{{ $deadline->time }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
+                            @endforeach
                         @else
-                            <p class="text-black text-center py-8">No deadlines available.</p>
+                            <p class="text-black text-center py-8">No deadlines for today.</p>
                         @endif
+                    @else
+                        <p class="text-black text-center py-8">No deadlines available.</p>
                     @endif
-                @else
-                    <p class="text-black text-center py-8">No deadlines available.</p>
-                @endif
-            </div>
+                </div>
 
-            <!-- Schedule Modal -->
-            <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-                <div class="bg-[#e6e7d9] rounded-3xl p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-black">Today's Schedule</h2>
-                        <button onclick="closeScheduleModal()" class="text-black text-2xl">&times;</button>
-                    </div>
-                    
-                    <div id="modalScheduleList">
-                        <!-- Schedule items will be loaded here -->
+                <!-- Schedule Modal -->
+                <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-[#e6e7d9] rounded-3xl p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-black">Today's Schedule</h2>
+                            <button onclick="closeScheduleModal()" class="text-black text-2xl">&times;</button>
+                        </div>
+                        
+                        <div id="modalScheduleList">
+                            <!-- Schedule items will be loaded here -->
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Deadline Modal -->
-            <div id="deadlineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-                <div class="bg-[#e6e7d9] rounded-3xl p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-black">Today's Deadline</h2>
-                        <button onclick="closeDeadlineModal()" class="text-black text-2xl">&times;</button>
-                    </div>
-                    
-                    <div id="modalDeadlineList">
-                        <!-- Deadline items will be loaded here -->
+                <!-- Deadline Modal -->
+                <div id="deadlineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-[#e6e7d9] rounded-3xl p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-black">Today's Deadline</h2>
+                            <button onclick="closeDeadlineModal()" class="text-black text-2xl">&times;</button>
+                        </div>
+                        
+                        <div id="modalDeadlineList">
+                            <!-- Deadline items will be loaded here -->
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Deadline Card -->
-            <div class="bg-[#e6e7d9] text-black rounded-3xl p-10 w-96 shadow-xl flex flex-col items-center text-center cursor-pointer" onclick="openDeadlineModal()">
-                <div class="flex items-center gap-4 mb-4">
-                    <i class="fa-regular fa-clock text-2xl"></i>
-                    <span class="font-bold text-xl">Your Deadline Today</span>
-                </div>
-                @if($todaysDeadline)
-                    <p class="font-bold text-xl mb-2 text-black">{{ $todaysDeadline->subject_name }}</p>
-                    <p class="text-lg text-black">{{ $todaysDeadline->time }}</p>
-                @elseif(isset($nextUpcomingDeadline) && $nextUpcomingDeadline)
-                    <p class="font-bold text-xl mb-2 text-black">Next: {{ $nextUpcomingDeadline->subject_name }}</p>
-                    <p class="text-lg text-black">{{ $nextUpcomingDeadline->date }} — {{ $nextUpcomingDeadline->time }}</p>
-                @else
-                    <p class="font-bold text-xl mb-2 text-black">No deadlines available</p>
-                @endif
-            </div>
-        </div>
 
         
 
         <!-- Menu Buttons -->
-        <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
-            <!-- Left Column -->
-            <div class="flex flex-col gap-6">
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.learning.difficulties') }}'">
+        
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- Learning Difficulties -->
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102" onclick="window.location.href='{{ route('mahasiswa.learning.difficulties') }}'">
                     <i class="fa-solid fa-cloud text-2xl"></i>
                     <span class="font-bold text-xl">Learning Difficulties</span>
                 </button>
 
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.learning.recommendation') }}'">
-                    <i class="fa-regular fa-lightbulb text-2xl"></i>
-                    <span class="font-bold text-xl">Learning Recommendation</span>
-                </button>
-
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap">
-                    <i class="fa-solid fa-chart-column text-2xl"></i>
-                    <span class="font-bold text-xl">Learning Development</span>
-                </button>
-            </div>
-
-            <!-- Right Column -->
-            <div class="flex flex-col gap-6">
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.schedule') }}'">
+                <!-- Schedule -->
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102" onclick="window.location.href='{{ route('mahasiswa.schedule') }}'">
                     <i class="fa-regular fa-calendar text-2xl"></i>
                     <span class="font-bold text-xl">Schedule</span>
                 </button>
 
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.deadline') }}'">
+                <!-- Learning Recommendation -->
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102" onclick="window.location.href='{{ route('mahasiswa.learning.recommendation') }}'">
+                    <i class="fa-regular fa-lightbulb text-2xl"></i>
+                    <span class="font-bold text-xl">Learning Recommendation</span>
+                </button>
+
+                <!-- Deadline -->
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102" onclick="window.location.href='{{ route('mahasiswa.deadline') }}'">
                     <i class="fa-solid fa-clock text-2xl"></i>
                     <span class="font-bold text-xl">Deadline</span>
                 </button>
 
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-[392px] hover:bg-[#2a3a2a] transition-all duration-300 whitespace-nowrap" onclick="window.location.href='{{ route('mahasiswa.exercise') }}'">
+                <!-- Learning Development -->
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102">
+                    <i class="fa-solid fa-chart-column text-2xl"></i>
+                    <span class="font-bold text-xl">Learning Development</span>
+                </button>
+
+                <!-- Exercise -->
+                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102" onclick="window.location.href='{{ route('mahasiswa.exercise') }}'">
                     <i class="fa-solid fa-list-check text-2xl"></i>
                     <span class="font-bold text-xl">Exercise</span>
                 </button>
             </div>
         </div>
+    </main>
 
     </div>
 
@@ -731,7 +648,6 @@
         
         // Close popup when clicking outside
         document.addEventListener('click', function(event) {
-            const profilePopup = document.getElementById('profilePopup');
             const notificationPopup = document.getElementById('notificationPopup');
             const bellIcon = document.getElementById('bellIcon');
             const gearIcon = document.getElementById('gearIcon');

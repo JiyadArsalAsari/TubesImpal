@@ -133,6 +133,9 @@ Route::get('/dosen/mahasiswa/{id}/exercises', [DosenController::class, 'viewExer
 Route::post('/dosen/assignment/{submissionId}/grade', [DosenController::class, 'gradeAssignment'])
     ->middleware('auth')
     ->name('dosen.assignment.grade');
+Route::post('/dosen/exercise/{exerciseId}/grade-manual', [DosenController::class, 'gradeManual'])
+    ->middleware('auth')
+    ->name('dosen.assignment.grade_manual');
 Route::get('/dosen/assignment/{submissionId}/download', [DosenController::class, 'downloadSubmission'])
     ->middleware('auth')
     ->name('dosen.assignment.download');

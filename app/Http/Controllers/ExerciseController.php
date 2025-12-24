@@ -188,34 +188,6 @@ class ExerciseController extends Controller
     }
 
     /**
-     * Halaman review hasil assignment untuk mahasiswa.
-     */
-    public function reviewAssignment($id)
-    {
-        $user = Auth::user();
-        if ($user->role !== User::ROLE_MAHASISWA) {
-            return redirect('/')->with('error', 'Hanya mahasiswa yang dapat mengakses halaman ini.');
-        }
-
-        $mahasiswa = $user->mahasiswa;
-        if (!$mahasiswa) {
-            return redirect('/')->with('error', 'Data mahasiswa tidak ditemukan.');
-        }
-
-        $exercise = Exercise::where('id', $id)
-            ->where('mahasiswa_id', $mahasiswa->id)
-            ->where('type', 'assignment')
-            ->firstOrFail();
-
-        $submission = AssignmentSubmission::where('exercise_id', $exercise->id)
-            ->where('mahasiswa_id', $mahasiswa->id)
-            ->orderByDesc('submitted_at')
-            ->first();
-
-        return view('mahasiswa.assignment_review', compact('exercise', 'submission'));
-    }
-
-    /**
      * Download assignment file.
      */
     public function downloadAssignment($id)
@@ -333,7 +305,7 @@ class ExerciseController extends Controller
             ]);
         }
 
-        return redirect()->route('mahasiswa.exercise')->with('success', 'Jawaban berhasil dikirim.');
+        return redirect()->back()->with('success', 'Jawaban berhasil dikirim.');
     }
 }
 

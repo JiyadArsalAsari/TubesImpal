@@ -103,112 +103,12 @@
         .notification-popup.show {
             display: block;
         }
+
+        .logo-container {
+            cursor: pointer;
+        }
     </style>
 </head>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const numberOfQuestionsSelect = document.getElementById('number-of-questions');
-        const questionFields = document.querySelectorAll('.question-field');
-        
-        // Initialize with default value (3 questions)
-        updateQuestionVisibility(3);
-        
-        numberOfQuestionsSelect.addEventListener('change', function() {
-            const numberOfQuestions = parseInt(this.value);
-            updateQuestionVisibility(numberOfQuestions);
-        });
-        
-        // Add event listeners for header icons
-        document.getElementById('bellIcon').addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleNotificationPopup();
-        });
-        
-        document.getElementById('gearIcon').addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleProfilePopup();
-        });
-        
-        // Add form submission logging
-        const quizForm = document.getElementById('quizForm');
-        if (quizForm) {
-            quizForm.addEventListener('submit', function(e) {
-                console.log('Quiz form is being submitted');
-                // You can uncomment the next line to prevent actual submission for testing
-                // e.preventDefault();
-            });
-        }
-        
-        function updateQuestionVisibility(numberOfQuestions) {
-            questionFields.forEach((field, index) => {
-                if (index < numberOfQuestions) {
-                    field.style.display = 'block';
-                } else {
-                    field.style.display = 'none';
-                }
-            });
-        }
-    });
-    
-    // Toggle profile popup visibility
-    function toggleProfilePopup() {
-        // Close notification popup if open
-        document.getElementById('notificationPopup').classList.remove('show');
-        
-        const popup = document.getElementById('profilePopup');
-        const overlay = document.getElementById('popupOverlay');
-        
-        popup.classList.toggle('show');
-        overlay.classList.toggle('show');
-        
-        // Hide language menu when closing profile popup
-        if (!popup.classList.contains('show')) {
-            document.getElementById('languageMenu').classList.remove('show');
-        }
-    }
-    
-    // Toggle notification popup visibility
-    function toggleNotificationPopup() {
-        // Close profile popup if open
-        document.getElementById('profilePopup').classList.remove('show');
-        
-        const popup = document.getElementById('notificationPopup');
-        const overlay = document.getElementById('popupOverlay');
-        
-        popup.classList.toggle('show');
-        overlay.classList.toggle('show');
-    }
-    
-    // Close all popups
-    function closeAllPopups() {
-        document.getElementById('profilePopup').classList.remove('show');
-        document.getElementById('notificationPopup').classList.remove('show');
-        document.getElementById('languageMenu').classList.remove('show');
-        document.getElementById('popupOverlay').classList.remove('show');
-    }
-    
-    // Toggle language submenu
-    function toggleLanguageMenu() {
-        const languageMenu = document.getElementById('languageMenu');
-        languageMenu.classList.toggle('show');
-    }
-    
-    // Close popup when clicking outside
-    document.addEventListener('click', function(event) {
-        const profilePopup = document.getElementById('profilePopup');
-        const notificationPopup = document.getElementById('notificationPopup');
-        const bellIcon = document.getElementById('bellIcon');
-        const gearIcon = document.getElementById('gearIcon');
-        
-        if (!profilePopup.contains(event.target) && 
-            !notificationPopup.contains(event.target) && 
-            !bellIcon.contains(event.target) && 
-            !gearIcon.contains(event.target) && 
-            (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) {
-            closeAllPopups();
-        }
-    });
-</script>
 <body class="bg-[#4b5b3b] text-white font-sans min-h-screen relative overflow-x-hidden">
     <!-- Decorative Line Background -->
     <div class="fixed inset-0 z-0 overflow-hidden">
@@ -292,8 +192,13 @@
     <div class="relative z-10">
     <!-- HEADER -->
     <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
-        <div class="text-2xl font-bold">{{ Auth::user()->name ?? 'Dosen' }}</div>
-        <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2" onclick="window.location.href='{{ route('dosen.dashboard') }}'">
+        <div class="flex items-center gap-4">
+            <a href="{{ route('dosen.dashboard') }}" class="text-gray-300 hover:text-white transition-colors">
+                <i class="fa-solid fa-arrow-left text-xl"></i>
+            </a>
+            <div class="text-2xl font-bold">{{ Auth::user()->name ?? 'Dosen' }}</div>
+        </div>
+        <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container" onclick="window.location.href='{{ route('dosen.dashboard') }}'">
             <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
         </div>
         <div class="flex gap-6 text-3xl relative">
@@ -308,8 +213,12 @@
     </header>
     
     <div class="flex justify-center w-full py-10">
-        <div class="max-w-4xl w-full px-20">
+        <div class="max-w-4xl w-full px-6">
             <div class="flex items-center justify-between mb-6">
+                 <div>
+                    <h1 class="text-2xl font-bold">Buat Quiz Baru</h1>
+                 </div>
+            </div>
          
         <form id="quizForm" action="{{ route('dosen.quiz.store', $mahasiswaId) }}" method="POST" class="bg-[#2f3d2c] border border-[#3c4c39] rounded-2xl p-6 shadow-xl space-y-4">
             @csrf
@@ -317,22 +226,23 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Judul</label>
-                    <input type="text" name="title" class="w-full rounded-lg text-black p-3" placeholder="Quiz 1 - Topik" required>
+                    <input type="text" name="title" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Quiz 1 - Topik" required>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Deadline (opsional)</label>
-                    <input type="datetime-local" name="deadline" class="w-full rounded-lg text-black p-3">
+                    <input type="datetime-local" name="deadline" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400">
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Durasi (menit, opsional)</label>
-                    <input type="number" name="duration_minutes" min="1" class="w-full rounded-lg text-black p-3" placeholder="Misal 20">
+                    <input type="number" name="duration_minutes" min="1" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Misal 20">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Jumlah Soal</label>
-                    <select name="number_of_questions" id="number-of-questions" class="w-full rounded-lg text-black p-3">
+                    <select name="number_of_questions" id="number-of-questions" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400">
+                        <option value="0" selected>0 soal</option>
                         @for ($i = 1; $i <= env('MAX_QUIZ_QUESTIONS', 50); $i++)
                             <option value="{{ $i }}">{{ $i }} soal</option>
                         @endfor
@@ -340,16 +250,16 @@
                 </div>
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Maksimal Percobaan</label>
-                    <input type="number" name="max_attempts" min="1" max="10" class="w-full rounded-lg text-black p-3" placeholder="Misal 3" value="1">
+                    <input type="number" name="max_attempts" min="1" max="10" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Misal 3" value="1">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Deskripsi (opsional)</label>
-                    <textarea name="description" rows="2" class="w-full rounded-lg text-black p-3" placeholder="Ringkasan quiz"></textarea>
+                    <textarea name="description" rows="2" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Ringkasan quiz"></textarea>
                 </div>
             </div>
 
             <div class="space-y-4">
-                <h2 class="font-semibold text-lg">Soal (Minimal 1)</h2>
+                <h2 class="font-semibold text-lg">Soal Quiz</h2>
                 <p class="text-sm text-gray-200">Gunakan minimal 2 opsi per soal, tandai jawaban benar.</p>
                 
                 @php
@@ -358,15 +268,15 @@
                 
                 <div id="questions-container">
                     @for ($i = 0; $i < $maxQuestions; $i++)
-                        <div class="question-field bg-[#395035] border border-[#436040] rounded-xl p-4 space-y-3 mb-4" style="display: {{ $i < 3 ? 'block' : 'none' }};">
+                        <div class="question-field bg-[#395035] border border-[#436040] rounded-xl p-4 space-y-3 mb-4" style="display: none;">
                             <label class="block text-sm text-gray-200 mb-1">Soal {{ $i+1 }}</label>
-                            <textarea name="questions[{{ $i }}][question]" rows="2" class="w-full rounded-lg text-black p-3" placeholder="Tulis pertanyaan"></textarea>
+                            <textarea name="questions[{{ $i }}][question]" rows="2" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Tulis pertanyaan"></textarea>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 @for ($j = 0; $j < 4; $j++)
                                     <div class="flex items-center gap-2">
                                         <input type="radio" name="questions[{{ $i }}][correct_option]" value="{{ $j }}" class="w-4 h-4">
-                                        <input type="text" name="questions[{{ $i }}][options][{{ $j }}][option_text]" class="flex-1 rounded-lg text-black p-3" placeholder="Opsi {{ chr(65+$j) }}">
+                                        <input type="text" name="questions[{{ $i }}][options][{{ $j }}][option_text]" class="flex-1 rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Opsi {{ chr(65+$j) }}">
                                     </div>
                                 @endfor
                             </div>
@@ -384,6 +294,118 @@
         </form>
         </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const numberOfQuestionsSelect = document.getElementById('number-of-questions');
+        const questionFields = document.querySelectorAll('.question-field');
+        
+        // Initialize with default value (0 questions)
+        updateQuestionVisibility(0);
+        
+        if (numberOfQuestionsSelect) {
+            numberOfQuestionsSelect.addEventListener('change', function() {
+                const numberOfQuestions = parseInt(this.value);
+                updateQuestionVisibility(numberOfQuestions);
+            });
+        }
+        
+        // Add event listeners for header icons
+        const bellIcon = document.getElementById('bellIcon');
+        if (bellIcon) {
+            bellIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleNotificationPopup();
+            });
+        }
+        
+        const gearIcon = document.getElementById('gearIcon');
+        if (gearIcon) {
+            gearIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleProfilePopup();
+            });
+        }
+        
+        // Add form submission logging
+        const quizForm = document.getElementById('quizForm');
+        if (quizForm) {
+            quizForm.addEventListener('submit', function(e) {
+                console.log('Quiz form is being submitted');
+                // You can uncomment the next line to prevent actual submission for testing
+                // e.preventDefault();
+            });
+        }
+        
+        function updateQuestionVisibility(numberOfQuestions) {
+            questionFields.forEach((field, index) => {
+                if (index < numberOfQuestions) {
+                    field.style.display = 'block';
+                } else {
+                    field.style.display = 'none';
+                }
+            });
+        }
+    });
+    
+    // Toggle profile popup visibility
+    function toggleProfilePopup() {
+        // Close notification popup if open
+        document.getElementById('notificationPopup').classList.remove('show');
+        
+        const popup = document.getElementById('profilePopup');
+        const overlay = document.getElementById('popupOverlay');
+        
+        popup.classList.toggle('show');
+        overlay.classList.toggle('show');
+        
+        // Hide language menu when closing profile popup
+        if (!popup.classList.contains('show')) {
+            document.getElementById('languageMenu').classList.remove('show');
+        }
+    }
+    
+    // Toggle notification popup visibility
+    function toggleNotificationPopup() {
+        // Close profile popup if open
+        document.getElementById('profilePopup').classList.remove('show');
+        
+        const popup = document.getElementById('notificationPopup');
+        const overlay = document.getElementById('popupOverlay');
+        
+        popup.classList.toggle('show');
+        overlay.classList.toggle('show');
+    }
+    
+    // Close all popups
+    function closeAllPopups() {
+        document.getElementById('profilePopup').classList.remove('show');
+        document.getElementById('notificationPopup').classList.remove('show');
+        document.getElementById('languageMenu').classList.remove('show');
+        document.getElementById('popupOverlay').classList.remove('show');
+    }
+    
+    // Toggle language submenu
+    function toggleLanguageMenu() {
+        const languageMenu = document.getElementById('languageMenu');
+        languageMenu.classList.toggle('show');
+    }
+    
+    // Close popup when clicking outside
+    document.addEventListener('click', function(event) {
+        const profilePopup = document.getElementById('profilePopup');
+        const notificationPopup = document.getElementById('notificationPopup');
+        const bellIcon = document.getElementById('bellIcon');
+        const gearIcon = document.getElementById('gearIcon');
+        
+        if (!profilePopup.contains(event.target) && 
+            !notificationPopup.contains(event.target) && 
+            !bellIcon.contains(event.target) && 
+            !gearIcon.contains(event.target) && 
+            (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) {
+            closeAllPopups();
+        }
+    });
+    </script>
 </body>
 </html>
-

@@ -325,7 +325,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Durasi (menit, opsional)</label>
                     <input type="number" name="duration_minutes" min="1" class="w-full rounded-lg text-black p-3" placeholder="Misal 20">
@@ -337,6 +337,10 @@
                             <option value="{{ $i }}">{{ $i }} soal</option>
                         @endfor
                     </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-200 mb-1">Maksimal Percobaan</label>
+                    <input type="number" name="max_attempts" min="1" max="10" class="w-full rounded-lg text-black p-3" placeholder="Misal 3" value="1">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Deskripsi (opsional)</label>

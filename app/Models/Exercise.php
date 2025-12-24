@@ -20,6 +20,7 @@ class Exercise extends Model
         'link',
         'file_attachment',
         'status',
+        'max_attempts',
     ];
 
     protected $casts = [
@@ -44,6 +45,11 @@ class Exercise extends Model
     public function mahasiswa()
     {
         return $this->belongsTo(Mahasiswa::class);
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(AssignmentSubmission::class, 'exercise_id');
     }
 }
 

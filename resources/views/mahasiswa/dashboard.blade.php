@@ -215,6 +215,31 @@
         
         <div class="profile-divider"></div>
         
+        @if(isset($connectedDosenRequests))
+        @if($connectedDosenRequests->count() > 0)
+        <div class="profile-item">
+            <span class="text-sm text-gray-300">Dosen Terhubung</span>
+        </div>
+        @foreach($connectedDosenRequests as $req)
+        <div class="profile-item">
+            <div class="flex items-center gap-3">
+                <div class="bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-user-tie text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-semibold">{{ optional($req->dosen->user)->name ?? $req->dosen->nama }}</p>
+                    <p class="text-xs text-gray-400">{{ optional($req->dosen->user)->email }}</p>
+                </div>
+            </div>
+        </div>
+        @endforeach
+        @else
+        <div class="profile-item">
+            <span class="text-sm text-gray-400">Belum ada dosen terhubung</span>
+        </div>
+        @endif
+        @endif
+
         <!-- Logout -->
         <div class="profile-item" onclick="window.location.href='{{ route('logout') }}'">
             <div class="flex items-center gap-3 text-red-400">
@@ -258,8 +283,11 @@
                 @if($todaysSchedule)
                     <p class="font-bold text-xl mb-2 text-black">{{ $todaysSchedule->subject_name }}</p>
                     <p class="text-lg text-black">{{ $todaysSchedule->room }} — {{ $todaysSchedule->time }}</p>
+                @elseif(isset($nextSchedule) && $nextSchedule)
+                    <p class="font-bold text-xl mb-2 text-black">Next: {{ $nextSchedule->subject_name }}</p>
+                    <p class="text-lg text-black">{{ $nextSchedule->day }} — {{ $nextSchedule->room }} — {{ $nextSchedule->time }}</p>
                 @else
-                    <p class="font-bold text-xl mb-2 text-black">No schedule for today</p>
+                    <p class="font-bold text-xl mb-2 text-black">No schedules available</p>
                 @endif
             </div>
 
@@ -283,7 +311,42 @@
                             </div>
                         @endforeach
                     @else
-                        <p class="text-black text-center py-8">No schedules for today.</p>
+                        @php
+                            $dayOrder = ['Monday'=>1,'Tuesday'=>2,'Wednesday'=>3,'Thursday'=>4,'Friday'=>5,'Saturday'=>6,'Sunday'=>7];
+                            $todayName = now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->format('l');
+                            $todayIndex = $dayOrder[$todayName] ?? 1;
+                            $upcomingSchedules = $mahasiswa->schedules->sortBy(function ($s) use ($dayOrder, $todayIndex) {
+                                $idx = $dayOrder[$s->day] ?? 8;
+                                $delta = $idx - $todayIndex;
+                                if ($delta < 0) { $delta += 7; }
+                                return [$delta, $s->time];
+                            })->take(5);
+                        @endphp
+                        @if($upcomingSchedules->count() > 0)
+                            <div class="text-black">
+                                <h3 class="font-bold text-xl mb-4">Upcoming Schedules</h3>
+                                @foreach($upcomingSchedules as $schedule)
+                                    <div class="bg-white rounded-2xl p-6 mb-4 shadow-md border border-gray-200">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-semibold text-black">{{ $schedule->subject_name }}</h4>
+                                            <span class="bg-[#233122] text-white text-xs px-2 py-1 rounded-full">{{ $schedule->day }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm text-black">
+                                            <div>
+                                                <p class="font-semibold">Room</p>
+                                                <p class="text-xs">{{ $schedule->room }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold">Time</p>
+                                                <p class="text-xs">{{ $schedule->time }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-black text-center py-8">No schedules available.</p>
+                        @endif
                     @endif
                 @else
                     <p class="text-black text-center py-8">No schedules available.</p>
@@ -298,6 +361,9 @@
                         $todaysDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
                             return $deadline->date === $todayDate;
                         });
+                        $upcomingDeadlines = $allDeadlines->filter(function ($deadline) use ($todayDate) {
+                            return $deadline->date >= $todayDate;
+                        })->take(5);
                     @endphp
                     @if($todaysDeadlines->count() > 0)
                         @foreach($todaysDeadlines as $deadline)
@@ -316,7 +382,31 @@
                             </div>
                         @endforeach
                     @else
-                        <p class="text-black text-center py-8">No deadlines for today.</p>
+                        @if($upcomingDeadlines->count() > 0)
+                            <div class="text-black">
+                                <h3 class="font-bold text-xl mb-4">Upcoming Deadlines</h3>
+                                @foreach($upcomingDeadlines as $deadline)
+                                    <div class="bg-white rounded-2xl p-6 mb-4 shadow-md border border-gray-200">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-semibold text-black">{{ $deadline->subject_name }}</h4>
+                                            <span class="bg-[#233122] text-white text-xs px-2 py-1 rounded-full">{{ $deadline->day }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm text-black">
+                                            <div>
+                                                <p class="font-semibold">Date</p>
+                                                <p class="text-xs">{{ $deadline->date }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold">Time</p>
+                                                <p class="text-xs">{{ $deadline->time }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-black text-center py-8">No deadlines available.</p>
+                        @endif
                     @endif
                 @else
                     <p class="text-black text-center py-8">No deadlines available.</p>
@@ -360,11 +450,16 @@
                 @if($todaysDeadline)
                     <p class="font-bold text-xl mb-2 text-black">{{ $todaysDeadline->subject_name }}</p>
                     <p class="text-lg text-black">{{ $todaysDeadline->time }}</p>
+                @elseif(isset($nextUpcomingDeadline) && $nextUpcomingDeadline)
+                    <p class="font-bold text-xl mb-2 text-black">Next: {{ $nextUpcomingDeadline->subject_name }}</p>
+                    <p class="text-lg text-black">{{ $nextUpcomingDeadline->date }} — {{ $nextUpcomingDeadline->time }}</p>
                 @else
-                    <p class="font-bold text-xl mb-2 text-black">No deadline for today</p>
+                    <p class="font-bold text-xl mb-2 text-black">No deadlines available</p>
                 @endif
             </div>
         </div>
+
+        
 
         <!-- Menu Buttons -->
         <div class="flex flex-col md:flex-row justify-center gap-40 mb-16 mx-10">
@@ -482,7 +577,7 @@
                 deadlineList.innerHTML = '<p class="text-black text-center py-8">No deadlines available.</p>';
             }
         }
-        
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             const scheduleModal = document.getElementById('scheduleModal');

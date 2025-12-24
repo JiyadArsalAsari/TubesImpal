@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .profile-popup { display: none; position: absolute; top: 60px; right: 20px; background-color: #1f2f1f; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 250px; padding: 20px; }
+        .profile-popup.show { display: block; }
+        .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 999; }
+        .popup-overlay.show { display: block; }
+        .profile-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .profile-item:hover { background-color: rgba(255,255,255,0.1); }
+        .profile-divider { height: 1px; background-color: rgba(255,255,255,0.1); margin: 10px 0; }
+        .language-submenu { display: none; margin-left: 20px; }
+        .language-submenu.show { display: block; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; background-color: #e74c3c; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .notification-popup { display: none; position: absolute; top: 60px; right: 70px; background-color: #1f2f1f; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 300px; max-width: 350px; padding: 30px; text-align: center; }
+        .notification-popup.show { display: block; }
+        .logo-container { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-[#4b5b3b] text-white font-sans relative overflow-x-hidden">
+    <div class="fixed inset-0 z-0 overflow-hidden">
+        <img src="{{ asset('line.png') }}" alt="Decorative Line" class="w-full h-full object-cover opacity-10 scale-150">
+    </div>
+    <div class="relative z-10 min-h-screen">
+        <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
+            <div class="text-2xl font-bold">{{ Auth::user()->name }}</div>
+            <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container" onclick="window.location.href='{{ route('dosen.dashboard') }}'">
+                <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
+            </div>
+            <div class="flex gap-6 text-3xl relative">
+                <div class="relative cursor-pointer" id="bellIcon">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+                <div class="cursor-pointer" id="gearIcon">
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+            </div>
+        </header>
+        <div class="popup-overlay" id="popupOverlay" onclick="closeAllPopups()"></div>
+        <div class="notification-popup" id="notificationPopup">
+            <div class="mb-4">
+                <i class="fa-regular fa-bell text-3xl text-gray-400 mb-3"></i>
+                <h3 class="font-bold text-xl mb-2">Notifications</h3>
+                <p class="text-gray-400">Notifications will be displayed here</p>
+            </div>
+        </div>
+        <div class="profile-popup" id="profilePopup">
+            <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-700">
+                <div class="bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center">
+                    <i class="fa-solid fa-user text-xl"></i>
+                </div>
+                <div>
+                    <p class="font-semibold">{{ Auth::user()->name }}</p>
+                    <p class="text-sm text-gray-400">{{ Auth::user()->email }}</p>
+                </div>
+            </div>
+            <div class="profile-item">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Profile Settings</span>
+                </div>
+            </div>
+            <div class="profile-divider"></div>
+            <div class="profile-item" onclick="toggleLanguageMenu()">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-language"></i>
+                        <span>Language</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                </div>
+            </div>
+            <div class="language-submenu" id="languageMenu">
+                <div class="profile-item">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-flag-usa"></i>
+                        <span>English</span>
+                    </div>
+                </div>
+                <div class="profile-item">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-flag"></i>
+                        <span>Indonesian</span>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-divider"></div>
+            <div class="profile-item" onclick="window.location.href='{{ route('logout') }}'">
+                <div class="flex items-center gap-3 text-red-400">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-6xl mx-auto px-6 py-10">
+            @if(session('success'))
+                <div class="mb-4 bg-green-100 text-green-800 border border-green-300 rounded-xl px-4 py-3">{{ session('success') }}</div>
+            @endif
+            @if(session('error'))
+                <div class="mb-4 bg-red-100 text-red-800 border border-red-300 rounded-xl px-4 py-3">{{ session('error') }}</div>
+            @endif
+            <div class="mb-6">
+                <p class="text-sm text-gray-300">Mahasiswa</p>
+                <h1 class="text-3xl font-bold">{{ $mahasiswa->nama }} ({{ $mahasiswa->user->email }})</h1>
+            </div>
+
+            <div class="bg-white text-black rounded-3xl shadow-xl p-8 border border-gray-200">
+                @php
+                    $grouped = $exercises->groupBy(function ($item) {
+                        return optional($item->deadline)?->format('l, d F Y') ?? 'Tanpa Deadline';
+                    });
+                @endphp
+
+                @if($exercises->count() === 0)
+                    <p class="text-center text-gray-600">Belum ada exercise untuk mahasiswa ini.</p>
+                @else
+                    <div class="space-y-8">
+                        @foreach($grouped as $date => $items)
+                            <div>
+                                <p class="text-sm text-gray-600 uppercase tracking-wide mb-3">{{ $date }}</p>
+                                <div class="space-y-4">
+                                    @foreach($items as $item)
+                                        @php
+                                            $latestAttempt = $item->attempts->first();
+                                            $latestSubmission = $item->submissions->first();
+                                        @endphp
+                                        <div class="bg-[#f4f5ef] rounded-2xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 border border-[#d6d7c9] shadow-lg">
+                                            <div class="flex items-start gap-3">
+                                                <div class="bg-[#1f2f1f] text-white rounded-xl px-3 py-2 text-xs font-semibold uppercase">
+                                                    {{ strtoupper($item->type) }}
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-lg">{{ $item->title }}</p>
+                                                    <p class="text-xs text-gray-700 mt-1">
+                                                        Deadline: {{ optional($item->deadline)?->format('H:i') ?? '—' }}
+                                                    </p>
+                                                    @if($item->description)
+                                                        <p class="text-xs text-gray-700 mt-1">{{ \Illuminate\Support\Str::limit($item->description, 120) }}</p>
+                                                    @endif
+                                                    <div class="mt-2">
+                                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $item->status === 'completed' ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white' }}">
+                                                            {{ strtoupper($item->status) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex-1">
+                                                @if($item->type === 'quiz')
+                                                    @if($latestAttempt)
+                                                        <div class="bg-white border border-gray-200 rounded-xl p-3">
+                                                            <p class="text-sm">Skor terakhir: <span class="font-bold">{{ $latestAttempt->score }} / 100</span></p>
+                                                            @if($latestAttempt->submitted_at)
+                                                                <p class="text-xs text-gray-600">Dikumpulkan: {{ $latestAttempt->submitted_at->format('d M Y H:i') }}</p>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        <p class="text-sm text-gray-600">Belum dikerjakan.</p>
+                                                    @endif
+                                                @else
+                                                    @if($latestSubmission)
+                                                        <div class="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+                                                            @if($latestSubmission->submitted_at)
+                                                                <p class="text-xs text-gray-600">Dikumpulkan: {{ $latestSubmission->submitted_at->format('d M Y H:i') }}</p>
+                                                            @endif
+                                                            <div class="flex flex-wrap gap-2 items-center">
+                                                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $latestSubmission->text_submission ? 'bg-blue-600 text-white' : 'bg-gray-400 text-white' }}">
+                                                                    {{ $latestSubmission->text_submission ? 'TEXT SUBMITTED' : 'NO TEXT' }}
+                                                                </span>
+                                                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $latestSubmission->file_submission ? 'bg-purple-600 text-white' : 'bg-gray-400 text-white' }}">
+                                                                    {{ $latestSubmission->file_submission ? 'FILE SUBMITTED' : 'NO FILE' }}
+                                                                </span>
+                                                            </div>
+                                                            @if($latestSubmission->text_submission)
+                                                                <p class="text-sm mt-2">Jawaban Teks: <span class="text-gray-700">{{ \Illuminate\Support\Str::limit($latestSubmission->text_submission, 160) }}</span></p>
+                                                            @endif
+                                                            @if($latestSubmission->file_submission)
+                                                                <a href="{{ route('dosen.assignment.download', $latestSubmission->id) }}" class="inline-flex items-center gap-2 text-blue-600 text-sm font-semibold">
+                                                                    <i class="fa-solid fa-download"></i>
+                                                                    Download File Jawaban
+                                                                </a>
+                                                            @endif
+
+                                                            <div class="mt-3">
+                                                                <p class="text-sm font-semibold">Penilaian</p>
+                                                                @if(!is_null($latestSubmission->grade))
+                                                                    <div id="gradeDisplay-{{ $latestSubmission->id }}" class="space-y-1">
+                                                                        <p class="text-sm">Nilai: <span class="font-bold">{{ $latestSubmission->grade }}</span></p>
+                                                                        @if($latestSubmission->feedback)
+                                                                            <p class="text-sm">Feedback: <span class="text-gray-700">{{ $latestSubmission->feedback }}</span></p>
+                                                                        @endif
+                                                                        <button type="button" onclick="toggleGradeForm({{ $latestSubmission->id }}, true)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-full">Edit</button>
+                                                                    </div>
+                                                                    <form id="gradeForm-{{ $latestSubmission->id }}" action="{{ route('dosen.assignment.grade', $latestSubmission->id) }}" method="POST" class="mt-2 flex flex-col md:flex-row gap-2 items-start md:items-center hidden">
+                                                                        @csrf
+                                                                        <input type="number" name="grade" min="0" max="100" class="rounded-lg border p-2 w-24" placeholder="Nilai" value="{{ $latestSubmission->grade ?? '' }}" required>
+                                                                        <textarea name="feedback" rows="2" class="rounded-lg border p-2 flex-1" placeholder="Feedback (opsional)">{{ $latestSubmission->feedback ?? '' }}</textarea>
+                                                                        <div class="flex gap-2">
+                                                                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full">Simpan</button>
+                                                                            <button type="button" onclick="toggleGradeForm({{ $latestSubmission->id }}, false)" class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full">Batal</button>
+                                                                        </div>
+                                                                    </form>
+                                                                @else
+                                                                    <form action="{{ route('dosen.assignment.grade', $latestSubmission->id) }}" method="POST" class="mt-2 flex flex-col md:flex-row gap-2 items-start md:items-center">
+                                                                        @csrf
+                                                                        <input type="number" name="grade" min="0" max="100" class="rounded-lg border p-2 w-24" placeholder="Nilai" required>
+                                                                        <textarea name="feedback" rows="2" class="rounded-lg border p-2 flex-1" placeholder="Feedback (opsional)"></textarea>
+                                                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full">Simpan</button>
+                                                                    </form>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <p class="text-sm text-gray-600">Belum dikerjakan.</p>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function toggleGradeForm(id, show) {
+        const displayEl = document.getElementById('gradeDisplay-' + id);
+        const formEl = document.getElementById('gradeForm-' + id);
+        if (!displayEl || !formEl) return;
+        if (show) {
+            displayEl.classList.add('hidden');
+            formEl.classList.remove('hidden');
+        } else {
+            formEl.classList.add('hidden');
+            displayEl.classList.remove('hidden');
+        }
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bell = document.getElementById('bellIcon');
+        const gear = document.getElementById('gearIcon');
+        if (bell) { bell.addEventListener('click', function(e) { e.stopPropagation(); toggleNotificationPopup(); }); }
+        if (gear) { gear.addEventListener('click', function(e) { e.stopPropagation(); toggleProfilePopup(); }); }
+    });
+    function toggleProfilePopup() {
+        document.getElementById('notificationPopup').classList.remove('show');
+        const popup = document.getElementById('profilePopup');
+        const overlay = document.getElementById('popupOverlay');
+        popup.classList.toggle('show');
+        overlay.classList.toggle('show');
+        if (!popup.classList.contains('show')) { document.getElementById('languageMenu').classList.remove('show'); }
+    }
+    function toggleNotificationPopup() {
+        document.getElementById('profilePopup').classList.remove('show');
+        const popup = document.getElementById('notificationPopup');
+        const overlay = document.getElementById('popupOverlay');
+        popup.classList.toggle('show');
+        overlay.classList.toggle('show');
+    }
+    function closeAllPopups() {
+        document.getElementById('profilePopup').classList.remove('show');
+        document.getElementById('notificationPopup').classList.remove('show');
+        document.getElementById('languageMenu').classList.remove('show');
+        document.getElementById('popupOverlay').classList.remove('show');
+    }
+    function toggleLanguageMenu() { const languageMenu = document.getElementById('languageMenu'); languageMenu.classList.toggle('show'); }
+    document.addEventListener('click', function(event) {
+        const profilePopup = document.getElementById('profilePopup');
+        const notificationPopup = document.getElementById('notificationPopup');
+        const bellIcon = document.getElementById('bellIcon');
+        const gearIcon = document.getElementById('gearIcon');
+        if (!profilePopup.contains(event.target) && !notificationPopup.contains(event.target) && !bellIcon.contains(event.target) && !gearIcon.contains(event.target) && (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) { closeAllPopups(); }
+    });
+</script>
+</html>

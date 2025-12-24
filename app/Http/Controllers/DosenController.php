@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\DosenMahasiswaRequest;
+use App\Models\Exercise;
+use App\Models\AssignmentSubmission;
 use App\Models\User;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class DosenController extends Controller
 {
@@ -47,8 +50,8 @@ class DosenController extends Controller
                 $dosenId = $dosen->id;
             }
             
-            // Get all mahasiswa requests for this dosen with related data for accepted requests
             $requests = DosenMahasiswaRequest::where('dosen_id', $dosenId)
+                ->whereIn('status', ['pending', 'accepted'])
                 ->with(['mahasiswa' => function($query) {
                     $query->with(['learningDifficulties', 'schedules', 'deadlines']);
                 }])
@@ -144,12 +147,18 @@ class DosenController extends Controller
                 $dosenId = $dosen->id;
             }
             
-            // Check if request already exists
             $existingRequest = DosenMahasiswaRequest::where('dosen_id', $dosenId)
                 ->where('mahasiswa_email', $request->email)
                 ->first();
-                
             if ($existingRequest) {
+                if ($existingRequest->status === 'rejected') {
+                    $existingRequest->update([
+                        'mahasiswa_id' => null,
+                        'mahasiswa_name' => $request->nama,
+                        'status' => 'pending'
+                    ]);
+                    return response()->json(['success' => true, 'message' => 'Request sent successfully']);
+                }
                 return response()->json(['success' => false, 'message' => 'Request already sent to this student'], 400);
             }
             
@@ -244,6 +253,103 @@ class DosenController extends Controller
             
             // Redirect with error message
             return redirect('/dosen/dashboard')->with('error', 'An error occurred while loading the learning progress. Please try again later.');
+        }
+    }
+
+    public function viewExercises($mahasiswaId)
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== User::ROLE_DOSEN) {
+                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
+            }
+
+            $dosen = $user->dosen;
+            $dosenId = $dosen ? $dosen->id : $user->id;
+
+            $connection = DosenMahasiswaRequest::where('dosen_id', $dosenId)
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status', 'accepted')
+                ->first();
+            if (!$connection) {
+                return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki akses ke mahasiswa ini.');
+            }
+
+            $mahasiswa = Mahasiswa::with('user')->findOrFail($mahasiswaId);
+
+            $exercises = Exercise::with([
+                    'submissions' => function($q) { $q->orderByDesc('submitted_at'); },
+                    'attempts' => function($q) { $q->orderByDesc('submitted_at'); },
+                ])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->orderBy('deadline', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('dosen.student_exercises', compact('mahasiswa', 'exercises'));
+        } catch (\Exception $e) {
+            Log::error('Error in DosenController@viewExercises: ' . $e->getMessage());
+            return redirect()->route('dosen.dashboard')->with('error', 'Terjadi kesalahan saat memuat exercises mahasiswa.');
+        }
+    }
+
+    public function gradeAssignment(Request $request, $submissionId)
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== User::ROLE_DOSEN) {
+                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
+            }
+
+            $validated = $request->validate([
+                'grade' => 'required|integer|min:0|max:100',
+                'feedback' => 'nullable|string',
+            ]);
+
+            $submission = AssignmentSubmission::with('exercise')->findOrFail($submissionId);
+
+            $dosen = $user->dosen;
+            $dosenId = $dosen ? $dosen->id : $user->id;
+
+            if ($submission->exercise->dosen_id !== $dosenId) {
+                return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk menilai submission ini.');
+            }
+
+            $submission->grade = $validated['grade'];
+            $submission->feedback = $validated['feedback'] ?? null;
+            $submission->save();
+
+            return back()->with('success', 'Nilai berhasil disimpan.');
+        } catch (\Exception $e) {
+            Log::error('Error in DosenController@gradeAssignment: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan nilai.');
+        }
+    }
+
+    public function downloadSubmission($submissionId)
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== User::ROLE_DOSEN) {
+                return redirect('/')->with('error', 'Access denied.');
+            }
+
+            $submission = AssignmentSubmission::with('exercise')->findOrFail($submissionId);
+
+            $dosen = $user->dosen;
+            $dosenId = $dosen ? $dosen->id : $user->id;
+            if ($submission->exercise->dosen_id !== $dosenId) {
+                return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk mengakses file ini.');
+            }
+
+            if (!$submission->file_submission || !Storage::disk('public')->exists($submission->file_submission)) {
+                return back()->with('error', 'File tidak ditemukan.');
+            }
+
+            return Storage::disk('public')->download($submission->file_submission, basename($submission->file_submission));
+        } catch (\Exception $e) {
+            Log::error('Error in DosenController@downloadSubmission: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat mengunduh file.');
         }
     }
     

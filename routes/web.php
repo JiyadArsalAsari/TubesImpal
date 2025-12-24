@@ -122,6 +122,37 @@ Route::get('/mahasiswa/exercise', [ExerciseController::class, 'mahasiswaIndex'])
     ->middleware('auth')
     ->name('mahasiswa.exercise');
 
+Route::get('/mahasiswa/completed-exercises-json', [ExerciseController::class, 'getCompletedExercises'])
+    ->middleware('auth')
+    ->name('mahasiswa.completed.exercises.json');
+
+// Dosen view student's exercises and grade assignments
+Route::get('/dosen/mahasiswa/{id}/exercises', [DosenController::class, 'viewExercises'])
+    ->middleware('auth')
+    ->name('dosen.mahasiswa.exercises');
+Route::post('/dosen/assignment/{submissionId}/grade', [DosenController::class, 'gradeAssignment'])
+    ->middleware('auth')
+    ->name('dosen.assignment.grade');
+Route::get('/dosen/assignment/{submissionId}/download', [DosenController::class, 'downloadSubmission'])
+    ->middleware('auth')
+    ->name('dosen.assignment.download');
+
+Route::get('/mahasiswa/assignment/{id}', [ExerciseController::class, 'attemptAssignment'])
+    ->middleware('auth')
+    ->name('mahasiswa.assignment.attempt');
+
+Route::get('/mahasiswa/assignment/{id}/download', [ExerciseController::class, 'downloadAssignment'])
+    ->middleware('auth')
+    ->name('mahasiswa.assignment.download');
+
+Route::post('/mahasiswa/assignment/{id}/submit', [ExerciseController::class, 'submitAssignment'])
+    ->middleware('auth')
+    ->name('mahasiswa.assignment.submit');
+
+Route::get('/mahasiswa/assignment/{id}/review', [ExerciseController::class, 'reviewAssignment'])
+    ->middleware('auth')
+    ->name('mahasiswa.assignment.review');
+
 Route::get('/dosen/mahasiswa/{id}/exercise/create', [ExerciseController::class, 'createForMahasiswa'])
     ->middleware('auth')
     ->name('dosen.exercise.create');
@@ -146,3 +177,20 @@ Route::post('/mahasiswa/quiz/{exerciseId}/submit', [QuizController::class, 'subm
 Route::get('/mahasiswa/quiz/{exerciseId}/review', [QuizController::class, 'review'])
     ->middleware('auth')
     ->name('mahasiswa.quiz.review');
+
+// Debug route for testing
+Route::get('/debug/quiz/{id}', function($id) {
+    try {
+        $exercise = \App\Models\Exercise::with(['mahasiswa.user', 'dosen.user'])
+            ->where('type', 'quiz')
+            ->findOrFail($id);
+        
+        return response()->json([
+            'exercise' => $exercise,
+            'mahasiswa' => $exercise->mahasiswa,
+            'dosen' => $exercise->dosen,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+})->middleware('auth');

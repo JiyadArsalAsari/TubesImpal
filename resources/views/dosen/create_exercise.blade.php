@@ -54,6 +54,11 @@
             </div>
 
             <div>
+                <label class="block text-sm text-gray-200 mb-1">Maksimal Percobaan</label>
+                <input type="number" name="max_attempts" min="1" max="10" class="w-full rounded-lg text-black p-3" placeholder="Misal 3" value="1">
+            </div>
+
+            <div>
                 <label class="block text-sm text-gray-200 mb-1">File Assignment (opsional)</label>
                 <input type="file" name="file_attachment" class="w-full rounded-lg text-black p-3">
                 <p class="text-xs text-gray-200 mt-1">Upload file assignment (PDF, DOC, DOCX, ZIP, etc.)</p>

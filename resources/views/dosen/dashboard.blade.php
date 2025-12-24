@@ -362,13 +362,6 @@
             Halo {{ Auth::user()->name }}, selamat datang di StudyFlow!
         </h2>
             
-        <!-- Role Information -->
-        <div class="max-w-3xl mx-auto px-6 mb-6">
-            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-                <p><strong>Debug Info:</strong> You are accessing the dosen dashboard.</p>
-                <p>User role: {{ Auth::user()->role ?? 'Unknown' }}</p>
-            </div>
-        </div>
 
         <!-- Success/Error Messages -->
         @if(session('success'))
@@ -407,73 +400,69 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="profileCardsContainer">
                 @foreach($requests as $request)
                 <div class="profile-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="bg-[#48bb78] rounded-full w-16 h-16 flex items-center justify-center">
-                            <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-[#48bb78] rounded-full w-16 h-16 flex items-center justify-center">
+                                <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xl text-black">{{ $request->mahasiswa_name }}</h3>
+                                <p class="text-gray-700">Mahasiswa S1 Informatika</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="font-bold text-xl text-black">{{ $request->mahasiswa_name }}</h3>
-                            <p class="text-gray-700">Mahasiswa S1 Informatika</p>
-                            <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold 
-                                @if($request->status == 'pending') status-pending 
-                                @elseif($request->status == 'accepted') status-accepted 
-                                @else status-rejected 
-                                @endif">
-                                {{ ucfirst($request->status) }}
-                            </span>
-                        </div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
+                            @if($request->status == 'pending') status-pending 
+                            @elseif($request->status == 'accepted') status-accepted 
+                            @else status-rejected 
+                            @endif">
+                            {{ ucfirst($request->status) }}
+                        </span>
                     </div>
                     
                     <!-- Learning Progress for Accepted Requests -->
                     @if($request->status == 'accepted' && $request->mahasiswa)
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <h4 class="font-semibold text-gray-800 mb-2">Learning Progress:</h4>
-                        
-                        <!-- Learning Difficulties Count -->
-                        <div class="flex items-center text-sm text-gray-600 mb-1">
-                            <i class="fa-solid fa-exclamation-circle mr-2"></i>
-                            <span>Difficulties: {{ $request->mahasiswa->learningDifficulties->count() }}</span>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-[#e6e7d9] rounded-xl px-4 py-3 text-center">
+                                <div class="text-xs text-gray-600">Difficulties</div>
+                                <div class="text-xl font-bold text-black">{{ $request->mahasiswa->learningDifficulties->count() }}</div>
+                            </div>
+                            <div class="bg-[#e6e7d9] rounded-xl px-4 py-3 text-center">
+                                <div class="text-xs text-gray-600">Status</div>
+                                <div class="text-sm font-semibold text-black">Connected</div>
+                            </div>
                         </div>
-                        
-                        <!-- Schedules Count -->
-                        <div class="flex items-center text-sm text-gray-600 mb-1">
-                            <i class="fa-solid fa-calendar-alt mr-2"></i>
-                            <span>Schedules: {{ $request->mahasiswa->schedules->count() }}</span>
-                        </div>
-                        
-                        <!-- Deadlines Count -->
-                        <div class="flex items-center text-sm text-gray-600 mb-1">
-                            <i class="fa-solid fa-clock mr-2"></i>
-                            <span>Deadlines: {{ $request->mahasiswa->deadlines->count() }}</span>
-                        </div>
-                        
-                        <!-- View Details Button -->
-                        <button class="mt-3 bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded" 
-                                onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
-                            View Details
-                        </button>
-                        
-                        <!-- Create Exercise -->
-                        <div class="mt-3 flex gap-2 flex-wrap">
-                            <button class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md"
+                                    onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
+                                <i class="fa-solid fa-eye text-lg"></i>
+                                <span>Details</span>
+                            </button>
+                            <button class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md"
                                     onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
-                                Buat Assignment
+                                <i class="fa-solid fa-file-circle-plus text-lg"></i>
+                                <span>Buat Assignment</span>
                             </button>
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                            <button class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md"
                                     onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
-                                Buat Quiz
+                                <i class="fa-solid fa-question text-lg"></i>
+                                <span>Buat Quiz</span>
                             </button>
+                            <button class="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md col-span-2"
+                                    onclick="window.location.href='{{ route('dosen.mahasiswa.exercises', $request->mahasiswa->id) }}'">
+                                <i class="fa-solid fa-list-check text-lg"></i>
+                                <span>Lihat Exercises</span>
+                            </button>
+                            <form action="{{ route('dosen.mahasiswa.remove', $request->id) }}" method="POST" class="col-span-2"
+                                  onsubmit="return confirm('Are you sure you want to remove this student?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">
+                                    <i class="fa-solid fa-user-minus text-lg"></i>
+                                    <span>Remove</span>
+                                </button>
+                            </form>
                         </div>
-                        
-                        <!-- Remove Button -->
-                        <form action="{{ route('dosen.mahasiswa.remove', $request->id) }}" method="POST" class="inline-block ml-2" 
-                              onsubmit="return confirm('Are you sure you want to remove this student?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="mt-3 bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-3 rounded">
-                                Remove
-                            </button>
-                        </form>
                     </div>
                     @endif
                 </div>

@@ -90,6 +90,7 @@ class QuizController extends Controller
                 'deadline' => $request->get('deadline'),
                 'duration_minutes' => $request->get('duration_minutes'),
                 'status' => 'published',
+                'max_attempts' => $request->get('max_attempts', 1),
             ]);
             
             Log::info('Created exercise with ID: ' . $exercise->id);
@@ -149,8 +150,36 @@ class QuizController extends Controller
             ->where('type', 'quiz')
             ->findOrFail($exerciseId);
 
-        if (!$user->mahasiswa || $exercise->mahasiswa_id !== $user->mahasiswa->id) {
+        // Debug information
+        \Log::info('Quiz attempt debug info', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'user_mahasiswa_id' => $user->mahasiswa ? $user->mahasiswa->id : null,
+            'exercise_mahasiswa_id' => $exercise->mahasiswa_id,
+            'exercise_id' => $exercise->id,
+            'mahasiswa_match' => $user->mahasiswa && $exercise->mahasiswa_id === $user->mahasiswa->id,
+        ]);
+
+        if (!$user->mahasiswa) {
+            \Log::info('User has no mahasiswa relationship');
             return redirect('/')->with('error', 'Quiz ini tidak ditugaskan kepada Anda.');
+        }
+        
+        if ($exercise->mahasiswa_id !== $user->mahasiswa->id) {
+            \Log::info('Mahasiswa ID mismatch', [
+                'exercise_mahasiswa_id' => $exercise->mahasiswa_id,
+                'user_mahasiswa_id' => $user->mahasiswa->id,
+            ]);
+            return redirect('/')->with('error', 'Quiz ini tidak ditugaskan kepada Anda.');
+        }
+
+        // Check if student has exceeded max attempts
+        $existingAttempts = QuizAttempt::where('exercise_id', $exercise->id)
+            ->where('mahasiswa_id', $user->mahasiswa->id)
+            ->count();
+            
+        if ($existingAttempts >= $exercise->max_attempts) {
+            return redirect()->route('mahasiswa.exercise')->with('error', 'Anda telah mencapai batas maksimal percobaan untuk quiz ini.');
         }
 
         $exercise->load(['quizQuestions.options']);
@@ -172,8 +201,26 @@ class QuizController extends Controller
             ->where('type', 'quiz')
             ->findOrFail($exerciseId);
 
+        // Debug information
+        \Log::info('Quiz submit debug info', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'user_mahasiswa_id' => $user->mahasiswa ? $user->mahasiswa->id : null,
+            'exercise_mahasiswa_id' => $exercise->mahasiswa_id,
+            'exercise_id' => $exercise->id,
+        ]);
+
         if (!$user->mahasiswa || $exercise->mahasiswa_id !== $user->mahasiswa->id) {
             return redirect('/')->with('error', 'Quiz ini tidak ditugaskan kepada Anda.');
+        }
+
+        // Check if student has exceeded max attempts
+        $existingAttempts = QuizAttempt::where('exercise_id', $exercise->id)
+            ->where('mahasiswa_id', $user->mahasiswa->id)
+            ->count();
+            
+        if ($existingAttempts >= $exercise->max_attempts) {
+            return redirect()->route('mahasiswa.exercise')->with('error', 'Anda telah mencapai batas maksimal percobaan untuk quiz ini.');
         }
 
         $data = $request->validate([
@@ -213,8 +260,32 @@ class QuizController extends Controller
 
             $attempt->score = $total > 0 ? round(($score / $total) * 100) : 0;
             $attempt->save();
+                
+            // Mark exercise as completed
+            \Log::info('Updating quiz exercise status', [
+                'exercise_id' => $exercise->id,
+                'current_status' => $exercise->status,
+                'new_status' => 'completed'
+            ]);
+            
+            // Fetch a fresh instance of the exercise to ensure we're updating the correct record
+            $freshExercise = Exercise::find($exercise->id);
+            if ($freshExercise) {
+                $freshExercise->status = 'completed';
+                $saved = $freshExercise->save();
+                
+                \Log::info('Quiz exercise status update result', [
+                    'exercise_id' => $freshExercise->id,
+                    'saved' => $saved,
+                    'status_after_save' => $freshExercise->fresh()->status
+                ]);
+            } else {
+                \Log::error('Failed to find exercise for status update', [
+                    'exercise_id' => $exercise->id
+                ]);
+            }
         });
-
+        
         return redirect()
             ->route('mahasiswa.quiz.review', [$exercise->id, 'attempt' => $attempt->id])
             ->with('success', 'Quiz dikumpulkan. Skor: ' . ($total > 0 ? round(($score / $total) * 100) : 0));
@@ -233,6 +304,15 @@ class QuizController extends Controller
         $exercise = Exercise::with(['quizQuestions.options'])
             ->where('type', 'quiz')
             ->findOrFail($exerciseId);
+
+        // Debug information
+        \Log::info('Quiz review debug info', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'user_mahasiswa_id' => $user->mahasiswa ? $user->mahasiswa->id : null,
+            'exercise_mahasiswa_id' => $exercise->mahasiswa_id,
+            'exercise_id' => $exercise->id,
+        ]);
 
         if (!$user->mahasiswa || $exercise->mahasiswa_id !== $user->mahasiswa->id) {
             return redirect('/')->with('error', 'Quiz ini tidak ditugaskan kepada Anda.');

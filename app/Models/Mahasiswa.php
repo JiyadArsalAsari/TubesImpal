@@ -41,4 +41,19 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(DosenMahasiswaRequest::class);
     }
+    
+    public function exerciseResults()
+    {
+        return $this->hasMany(ExerciseResult::class);
+    }
+    
+    public function quizAttempts()
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+    
+    public function assignmentSubmissions()
+    {
+        return $this->hasMany(AssignmentSubmission::class);
+    }
 }

@@ -95,6 +95,11 @@ Route::get('/mahasiswa/learning-recommendation/{id}',
     ->middleware('auth')
     ->name('mahasiswa.learning.recommendation.detail');
 
+// Learning Development Route
+Route::get('/mahasiswa/learning-development', [MahasiswaController::class, 'learningDevelopment'])
+    ->middleware('auth')
+    ->name('mahasiswa.learning.development');
+
 // Schedule Route
 Route::get('/mahasiswa/schedule', [ScheduleController::class, 'index'])
     ->middleware('auth')

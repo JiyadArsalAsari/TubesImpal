@@ -419,10 +419,10 @@
                 </button>
 
                 <!-- Learning Development -->
-                <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102">
+                <a href="{{ route('mahasiswa.learning.development') }}" class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102 cursor-pointer">
                     <i class="fa-solid fa-chart-column text-2xl"></i>
                     <span class="font-bold text-xl">Learning Development</span>
-                </button>
+                </a>
 
                 <!-- Exercise -->
                 <button class="flex items-center gap-5 bg-[#1f2f1f] p-7 rounded-3xl text-white shadow-xl justify-center w-full hover:bg-[#2a3a2a] transition-all duration-300 transform hover:scale-102" onclick="window.location.href='{{ route('mahasiswa.exercise') }}'">

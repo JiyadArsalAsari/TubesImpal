@@ -8,6 +8,11 @@ use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
 use App\Models\Deadline;
 use App\Models\DosenMahasiswaRequest;
+use App\Models\LearningDifficulty;
+use App\Models\QuizAttempt;
+use App\Models\AssignmentSubmission;
+use App\Models\ExerciseResult;
+use App\Models\Mahasiswa;
 
 class MahasiswaController extends Controller
 {
@@ -135,5 +140,245 @@ class MahasiswaController extends Controller
         
         return response()->json(['success' => true, 'message' => 'Request rejected successfully']);
     }
+    
+    public function learningDevelopment()
+    {
+        // Ensure only mahasiswa can access this page
+        if (Auth::user()->role !== 'mahasiswa') {
+            abort(403, 'Unauthorized access');
+        }
 
+        try {
+            // Get the authenticated mahasiswa data
+            $mahasiswa = Auth::user()->mahasiswa;
+            
+            // Check if mahasiswa exists
+            if (!$mahasiswa) {
+                abort(404, 'Mahasiswa profile not found');
+            }
+            
+            // Initialize default values
+            $learningDifficulties = collect();
+            $exerciseResults = collect();
+            $chartData = [];
+            
+            try {
+                // Eager load relationships to avoid N+1 queries
+                $mahasiswa->load([
+                    'learningDifficulties' => function ($query) {
+                        $query->orderBy('created_at', 'desc');
+                    },
+                    'exerciseResults' => function ($query) {
+                        $query->orderBy('attempted_at', 'asc')
+                              ->orderBy('created_at', 'asc');
+                    },
+                    'quizAttempts' => function ($query) {
+                        $query->orderBy('submitted_at', 'asc')
+                              ->orderBy('created_at', 'asc');
+                    },
+                    'assignmentSubmissions' => function ($query) {
+                        $query->whereNotNull('submitted_at')
+                              ->orderBy('submitted_at', 'asc')
+                              ->orderBy('created_at', 'asc');
+                    }
+                ]);
+                
+                // Get learning difficulties for this mahasiswa
+                $learningDifficulties = $mahasiswa->learningDifficulties ?? collect();
+                
+                // Get all exercise results (from QuizAttempt, AssignmentSubmission, and ExerciseResult)
+                $allExerciseResults = $this->getAllExerciseResults($mahasiswa);
+                
+                // Prepare data for the chart - group by date and calculate average score
+                $chartData = $this->prepareChartData($allExerciseResults);
+                
+                // Calculate statistics
+                $stats = $this->calculateStatistics($mahasiswa, $allExerciseResults);
+                
+                // For stats, use the combined results
+                $exerciseResults = $allExerciseResults;
+                
+            } catch (\Exception $e) {
+                // Log the error but continue to show the page
+                \Log::warning('Error loading data in learningDevelopment: ' . $e->getMessage());
+                // Use default empty data
+                $exerciseResults = collect();
+                $chartData = $this->prepareChartData(collect());
+            }
+            
+            // Always return the view, even if there's an error loading data
+            return view('mahasiswa.learning_development', compact(
+                'mahasiswa',
+                'learningDifficulties',
+                'chartData',
+                'exerciseResults',
+                'stats'
+            ));
+            
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Error in learningDevelopment: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            // Return error view or redirect with error message
+            return redirect()
+                ->route('mahasiswa.dashboard')
+                ->with('error', 'Terjadi kesalahan saat memuat data learning development: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get all exercise results from different sources (QuizAttempt, AssignmentSubmission, ExerciseResult)
+     */
+    private function getAllExerciseResults($mahasiswa)
+    {
+        $allResults = collect();
+        
+        // Get QuizAttempts (for quiz exercises)
+        foreach ($mahasiswa->quizAttempts ?? collect() as $attempt) {
+            $allResults->push((object) [
+                'score' => $attempt->score ?? 0,
+                'attempted_at' => $attempt->submitted_at ?? $attempt->started_at ?? $attempt->created_at,
+                'status' => ($attempt->score ?? 0) >= 70 ? 'lulus' : 'tidak_lulus',
+                'type' => 'quiz'
+            ]);
+        }
+        
+        // Get AssignmentSubmissions (for assignment exercises)
+        foreach ($mahasiswa->assignmentSubmissions ?? collect() as $submission) {
+            // Only include if submitted
+            if ($submission->submitted_at) {
+                $score = $submission->grade ?? 0;
+                $allResults->push((object) [
+                    'score' => $score,
+                    'attempted_at' => $submission->submitted_at ?? $submission->created_at,
+                    'status' => $score >= 70 ? 'lulus' : 'tidak_lulus',
+                    'type' => 'assignment'
+                ]);
+            }
+        }
+        
+        // Get ExerciseResults (if any exist)
+        foreach ($mahasiswa->exerciseResults ?? collect() as $result) {
+            $allResults->push((object) [
+                'score' => $result->score ?? 0,
+                'attempted_at' => $result->attempted_at ?? $result->created_at,
+                'status' => $result->status ?? 'tidak_lulus',
+                'type' => 'exercise_result'
+            ]);
+        }
+        
+        // Sort by attempted_at
+        return $allResults->sortBy(function ($result) {
+            return $result->attempted_at ? $result->attempted_at->timestamp : 0;
+        })->values();
+    }
+    
+    /**
+     * Prepare chart data from exercise results
+     * Groups results by date and shows individual scores
+     */
+    private function prepareChartData($exerciseResults)
+    {
+        if ($exerciseResults->isEmpty()) {
+            return [];
+        }
+        
+        // Group results by date (not month) to show individual activities
+        $groupedResults = $exerciseResults->groupBy(function ($result) {
+            $date = $result->attempted_at ?? now();
+            if (is_string($date)) {
+                $date = \Carbon\Carbon::parse($date);
+            }
+            return $date->format('M d');
+        });
+        
+        $chartData = [];
+        foreach ($groupedResults as $date => $results) {
+            // For each date, show the average score
+            $averageScore = $results->avg(function ($result) {
+                return (float) ($result->score ?? 0);
+            }) ?? 0;
+            
+            $chartData[] = [
+                'date' => $date,
+                'score' => round($averageScore, 2),
+                'type' => $results->first()->type ?? 'unknown'
+            ];
+        }
+        
+        // Sort by date to ensure chronological order
+        usort($chartData, function ($a, $b) {
+            return strtotime($a['date']) <=> strtotime($b['date']);
+        });
+        
+        return $chartData;
+    }
+    
+    /**
+     * Calculate statistics for the dashboard
+     */
+    private function calculateStatistics($mahasiswa, $allExerciseResults)
+    {
+        // Separate quiz and assignment results
+        $quizResults = collect();
+        $assignmentResults = collect();
+        
+        foreach ($allExerciseResults as $result) {
+            if ($result->type === 'quiz') {
+                $quizResults->push($result);
+            } elseif ($result->type === 'assignment') {
+                $assignmentResults->push($result);
+            }
+        }
+        
+        // Overall statistics
+        $overallAverage = $allExerciseResults->isNotEmpty() 
+            ? round($allExerciseResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+            : 0;
+        
+        // Recent average (last 3 activities)
+        $recentResults = $allExerciseResults->take(-3);
+        $recentAverage = $recentResults->isNotEmpty()
+            ? round($recentResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+            : 0;
+        
+        // Performance trend (recent average vs overall average)
+        $performanceTrend = 0;
+        if ($overallAverage > 0 && $recentAverage > 0) {
+            $performanceTrend = round((($recentAverage - $overallAverage) / $overallAverage) * 100, 1);
+        }
+        
+        // Quiz statistics
+        $quizStats = [
+            'total_attempts' => $quizResults->count(),
+            'missed' => 0, // Can be calculated based on exercises assigned
+            'average_score' => $quizResults->isNotEmpty()
+                ? round($quizResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+                : 0.0,
+            'highest_score' => $quizResults->isNotEmpty()
+                ? round($quizResults->max(function ($r) { return (float)($r->score ?? 0); }), 0)
+                : 0
+        ];
+        
+        // Assignment statistics
+        $assignmentStats = [
+            'total_submissions' => $assignmentResults->count(),
+            'missed' => 0, // Can be calculated based on exercises assigned
+            'average_score' => $assignmentResults->isNotEmpty()
+                ? round($assignmentResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+                : 0.0,
+            'highest_score' => $assignmentResults->isNotEmpty()
+                ? round($assignmentResults->max(function ($r) { return (float)($r->score ?? 0); }), 0)
+                : 0
+        ];
+        
+        return [
+            'overall_average' => $overallAverage,
+            'recent_average' => $recentAverage,
+            'performance_trend' => $performanceTrend,
+            'quiz' => $quizStats,
+            'assignment' => $assignmentStats
+        ];
+    }
 }

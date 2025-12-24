@@ -153,6 +153,85 @@ class ExerciseController extends Controller
     }
 
     /**
+     * Halaman edit exercise.
+     */
+    public function edit($id)
+    {
+        $user = Auth::user();
+        if ($user->role !== User::ROLE_DOSEN) {
+            return redirect('/')->with('error', 'Hanya dosen yang dapat mengedit exercise.');
+        }
+
+        $exercise = Exercise::findOrFail($id);
+
+        // Check ownership/permission
+        $dosen = $user->dosen;
+        $dosenId = $dosen ? $dosen->id : $user->id;
+        
+        if ($exercise->dosen_id != $dosenId) {
+            return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk mengedit exercise ini.');
+        }
+
+        $mahasiswa = $exercise->mahasiswa;
+
+        return view('dosen.edit_exercise', compact('exercise', 'mahasiswa'));
+    }
+
+    /**
+     * Update exercise.
+     */
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+        if ($user->role !== User::ROLE_DOSEN) {
+            return redirect('/')->with('error', 'Hanya dosen yang dapat mengedit exercise.');
+        }
+
+        $exercise = Exercise::findOrFail($id);
+
+        // Check ownership
+        $dosen = $user->dosen;
+        $dosenId = $dosen ? $dosen->id : $user->id;
+
+        if ($exercise->dosen_id != $dosenId) {
+            return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk mengedit exercise ini.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'deadline' => 'nullable|date',
+            'link' => 'nullable|url',
+            'max_attempts' => 'nullable|integer|min:1|max:10',
+            'file_attachment' => 'nullable|file|mimes:pdf,doc,docx,zip,rar,jpg,jpeg,png|max:10240',
+        ]);
+
+        // Handle file upload
+        if ($request->hasFile('file_attachment')) {
+            // Delete old file if exists
+            if ($exercise->file_attachment) {
+                Storage::disk('public')->delete($exercise->file_attachment);
+            }
+            
+            $file = $request->file('file_attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('assignments', $fileName, 'public');
+            $exercise->file_attachment = $filePath;
+        }
+
+        $exercise->title = $validated['title'];
+        $exercise->description = $validated['description'] ?? null;
+        $exercise->deadline = $validated['deadline'] ?? null;
+        $exercise->link = $validated['link'] ?? null;
+        $exercise->max_attempts = $validated['max_attempts'] ?? 1;
+        
+        $exercise->save();
+
+        return redirect()->route('dosen.mahasiswa.exercises', $exercise->mahasiswa_id)
+            ->with('success', 'Assignment berhasil diperbarui.');
+    }
+
+    /**
      * Halaman attempt untuk assignment.
      */
     public function attemptAssignment($id)

@@ -74,7 +74,7 @@ class MahasiswaController extends Controller
         // Redirect to learning recommendation page
         return redirect()->route('mahasiswa.learning.recommendation');
     }
-    
+
     public function getDosenRequests()
     {
         // Ensure only mahasiswa can access this
@@ -157,62 +157,87 @@ class MahasiswaController extends Controller
                 abort(404, 'Mahasiswa profile not found');
             }
             
-            // Initialize default values
-            $learningDifficulties = collect();
-            $exerciseResults = collect();
-            $chartData = [];
+            // Fetch Quiz Data with safety checks
+            $quizAttempts = \App\Models\QuizAttempt::where('mahasiswa_id', $mahasiswa->id)
+                ->with('exercise')
+                ->orderBy('submitted_at', 'asc')
+                ->get()
+                ->filter(function ($attempt) {
+                    return $attempt->exercise != null;
+                })
+                ->map(function ($attempt) {
+                    return [
+                        'title' => $attempt->exercise->title,
+                        'date' => $attempt->submitted_at ? $attempt->submitted_at->format('Y-m-d') : now()->format('Y-m-d'),
+                        'score' => $attempt->score,
+                        'type' => 'Quiz'
+                    ];
+                });
+
+            // Fetch Assignment Data with safety checks
+            $assignmentSubmissions = AssignmentSubmission::where('mahasiswa_id', $mahasiswa->id)
+                ->whereNotNull('grade')
+                ->with('exercise')
+                ->orderBy('submitted_at', 'asc')
+                ->get()
+                ->filter(function ($submission) {
+                    return $submission->exercise != null;
+                })
+                ->map(function ($submission) {
+                    return [
+                        'title' => $submission->exercise->title,
+                        'date' => $submission->submitted_at ? $submission->submitted_at->format('Y-m-d') : now()->format('Y-m-d'),
+                        'score' => $submission->grade,
+                        'type' => 'Assignment'
+                    ];
+                });
+
+            // Calculate Average Scores
+            $quizAverage = $quizAttempts->avg('score') ?? 0;
+            $assignmentAverage = $assignmentSubmissions->avg('score') ?? 0;
+            $totalAverage = ($quizAttempts->isEmpty() && $assignmentSubmissions->isEmpty()) ? 0 :
+                collect([...$quizAttempts, ...$assignmentSubmissions])->avg('score');
+
+            // Trend Analysis
+            $allActivities = collect([...$quizAttempts, ...$assignmentSubmissions])->sortBy('date');
+            $recentActivities = $allActivities->take(-3);
+            $recentAverage = $recentActivities->avg('score') ?? 0;
             
-            try {
-                // Eager load relationships to avoid N+1 queries
-                $mahasiswa->load([
-                    'learningDifficulties' => function ($query) {
-                        $query->orderBy('created_at', 'desc');
-                    },
-                    'exerciseResults' => function ($query) {
-                        $query->orderBy('attempted_at', 'asc')
-                              ->orderBy('created_at', 'asc');
-                    },
-                    'quizAttempts' => function ($query) {
-                        $query->orderBy('submitted_at', 'asc')
-                              ->orderBy('created_at', 'asc');
-                    },
-                    'assignmentSubmissions' => function ($query) {
-                        $query->whereNotNull('submitted_at')
-                              ->orderBy('submitted_at', 'asc')
-                              ->orderBy('created_at', 'asc');
-                    }
-                ]);
-                
-                // Get learning difficulties for this mahasiswa
-                $learningDifficulties = $mahasiswa->learningDifficulties ?? collect();
-                
-                // Get all exercise results (from QuizAttempt, AssignmentSubmission, and ExerciseResult)
-                $allExerciseResults = $this->getAllExerciseResults($mahasiswa);
-                
-                // Prepare data for the chart - group by date and calculate average score
-                $chartData = $this->prepareChartData($allExerciseResults);
-                
-                // Calculate statistics
-                $stats = $this->calculateStatistics($mahasiswa, $allExerciseResults);
-                
-                // For stats, use the combined results
-                $exerciseResults = $allExerciseResults;
-                
-            } catch (\Exception $e) {
-                // Log the error but continue to show the page
-                \Log::warning('Error loading data in learningDevelopment: ' . $e->getMessage());
-                // Use default empty data
-                $exerciseResults = collect();
-                $chartData = $this->prepareChartData(collect());
+            $trend = 0;
+            if ($totalAverage > 0) {
+                $trend = (($recentAverage - $totalAverage) / $totalAverage) * 100;
             }
+
+            // Calculate Missed Activities
+            $missedQuizzes = \App\Models\Exercise::where('mahasiswa_id', $mahasiswa->id)
+                ->where('type', 'quiz')
+                ->whereDoesntHave('attempts')
+                ->count();
+
+            $missedAssignments = \App\Models\Exercise::where('mahasiswa_id', $mahasiswa->id)
+                ->where('type', 'assignment')
+                ->whereDoesntHave('submissions')
+                ->count();
+
+            // General Feedback (Show all feedbacks for this student)
+            $generalFeedbacks = \App\Models\StudentFeedback::where('mahasiswa_id', $mahasiswa->id)
+                ->with('dosen') // Eager load dosen to show who gave feedback
+                ->orderBy('created_at', 'desc')
+                ->get();
             
-            // Always return the view, even if there's an error loading data
+            // Return the view
             return view('mahasiswa.learning_development', compact(
                 'mahasiswa',
-                'learningDifficulties',
-                'chartData',
-                'exerciseResults',
-                'stats'
+                'quizAttempts',
+                'assignmentSubmissions',
+                'quizAverage',
+                'assignmentAverage',
+                'totalAverage',
+                'trend',
+                'recentAverage',
+                'missedQuizzes',
+                'missedAssignments',
+                'generalFeedbacks'
             ));
             
         } catch (\Exception $e) {

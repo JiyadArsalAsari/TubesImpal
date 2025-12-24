@@ -111,6 +111,13 @@
                 <h1 class="text-3xl font-bold">{{ $mahasiswa->nama }} ({{ $mahasiswa->user->email }})</h1>
             </div>
 
+            <div class="bg-[#395035] text-white rounded-3xl shadow-xl p-6 border border-[#436040] mb-8">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="exerciseSearch" placeholder="Cari assignment atau quiz..." class="w-full pl-12 pr-4 py-3 rounded-xl bg-[#2f3d2c] text-white border border-[#436040] placeholder-gray-400 focus:outline-none focus:border-[#48bb78] shadow-md transition-all">
+                </div>
+            </div>
+
             <div class="bg-[#395035] text-white rounded-3xl shadow-xl p-8 border border-[#436040]">
                 @php
                     $grouped = $exercises->groupBy(function ($item) {
@@ -123,7 +130,7 @@
                 @else
                     <div class="space-y-8">
                         @foreach($grouped as $date => $items)
-                            <div>
+                            <div class="date-group">
                                 <p class="text-sm text-gray-300 uppercase tracking-wide mb-3">{{ $date }}</p>
                                 <div class="space-y-4">
                                     @foreach($items as $item)
@@ -131,23 +138,26 @@
                                             $latestAttempt = $item->attempts->first();
                                             $latestSubmission = $item->submissions->first();
                                         @endphp
-                                        <div class="bg-[#2f3d2c] rounded-2xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 border border-[#436040] shadow-lg">
+                                        <div class="exercise-item bg-[#2f3d2c] rounded-2xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 border border-[#436040] shadow-lg">
                                             <div class="flex items-start gap-3">
                                                 <div class="bg-[#1f2f1f] text-white rounded-xl px-3 py-2 text-xs font-semibold uppercase border border-[#436040]">
                                                     {{ strtoupper($item->type) }}
                                                 </div>
                                                 <div>
-                                                    <p class="font-bold text-lg text-white">{{ $item->title }}</p>
+                                                    <p class="exercise-title font-bold text-lg text-white">{{ $item->title }}</p>
                                                     <p class="text-xs text-gray-300 mt-1">
                                                         Deadline: {{ optional($item->deadline)?->format('H:i') ?? '—' }}
                                                     </p>
                                                     @if($item->description)
                                                         <p class="text-xs text-gray-300 mt-1">{{ \Illuminate\Support\Str::limit($item->description, 120) }}</p>
                                                     @endif
-                                                    <div class="mt-2">
+                                                    <div class="mt-2 flex flex-wrap gap-2">
                                                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $item->status === 'completed' ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white' }}">
                                                             {{ strtoupper($item->status) }}
                                                         </span>
+                                                        <a href="{{ route('dosen.exercise.edit', $item->id) }}" class="text-yellow-400 hover:text-yellow-300 text-xs font-semibold flex items-center gap-1 bg-[#2f3d2c] px-3 py-1 rounded-full border border-yellow-500/50 hover:bg-yellow-500 hover:text-black transition-all">
+                                                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                                                        </a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -294,6 +304,45 @@
         const bellIcon = document.getElementById('bellIcon');
         const gearIcon = document.getElementById('gearIcon');
         if (!profilePopup.contains(event.target) && !notificationPopup.contains(event.target) && !bellIcon.contains(event.target) && !gearIcon.contains(event.target) && (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) { closeAllPopups(); }
+    });
+</script>
+<script>
+    // Search functionality
+    document.getElementById('exerciseSearch').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const items = document.querySelectorAll('.exercise-item');
+        const dateGroups = document.querySelectorAll('.date-group');
+        let hasVisibleItems = false;
+
+        items.forEach(item => {
+            const title = item.querySelector('.exercise-title').textContent.toLowerCase();
+            if (title.includes(filter)) {
+                item.style.display = '';
+                hasVisibleItems = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Hide date groups if no visible items in that group
+        dateGroups.forEach(group => {
+            const itemsInGroup = group.querySelectorAll('.exercise-item');
+            let hasVisible = false;
+            itemsInGroup.forEach(item => {
+                if (item.style.display !== 'none') {
+                    hasVisible = true;
+                }
+            });
+            
+            if (!hasVisible) {
+                group.style.display = 'none';
+            } else {
+                group.style.display = '';
+            }
+        });
+
+        // Show "No results" message if needed (optional, but good UX)
+        // Check if we need to add a no results placeholder
     });
 </script>
 </html>

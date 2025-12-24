@@ -462,4 +462,157 @@ class DosenController extends Controller
             return redirect()->back()->with('error', 'Failed to save grade.');
         }
     }
+
+    public function viewStudentDevelopment($mahasiswaId)
+    {
+        $user = Auth::user();
+        
+        // Debugging logs
+        Log::info('viewStudentDevelopment called', [
+            'user_id' => $user->id,
+            'role' => $user->role,
+            'mahasiswa_id' => $mahasiswaId
+        ]);
+
+        if ($user->role !== User::ROLE_DOSEN) {
+            Log::warning('Access denied: User is not dosen');
+            return redirect('/')->with('error', 'Access denied. You are not a dosen.');
+        }
+
+        // Robust connection check using relationship to handle dosen_id/user_id confusion
+        $connected = DosenMahasiswaRequest::where('mahasiswa_id', $mahasiswaId)
+            ->where('status', 'accepted')
+            ->where(function($query) use ($user) {
+                // Check via relation (proper way)
+                $query->whereHas('dosen', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                // Or check via direct ID match (legacy/fallback way)
+                ->orWhere('dosen_id', $user->id);
+            })
+            ->exists();
+            
+        Log::info('Connection check result', ['connected' => $connected]);
+
+        if (!$connected) {
+             Log::warning('Connection check failed for user ' . $user->id . ' and mahasiswa ' . $mahasiswaId);
+             return redirect()->route('dosen.dashboard')->with('error', 'You do not have permission to view this student.');
+        }
+
+        // Get Dosen ID for feedback query
+        $dosen = $user->dosen;
+        $dosenId = $dosen ? $dosen->id : $user->id;
+
+        $mahasiswa = Mahasiswa::findOrFail($mahasiswaId);
+
+        // Fetch Quiz Data with safety checks
+        $quizAttempts = \App\Models\QuizAttempt::where('mahasiswa_id', $mahasiswa->id)
+            ->with('exercise')
+            ->orderBy('submitted_at', 'asc')
+            ->get()
+            ->filter(function ($attempt) {
+                return $attempt->exercise != null;
+            })
+            ->map(function ($attempt) {
+                return [
+                    'title' => $attempt->exercise->title,
+                    'date' => $attempt->submitted_at ? $attempt->submitted_at->format('Y-m-d') : now()->format('Y-m-d'),
+                    'score' => $attempt->score,
+                    'type' => 'Quiz'
+                ];
+            });
+
+        // Fetch Assignment Data with safety checks
+        $assignmentSubmissions = AssignmentSubmission::where('mahasiswa_id', $mahasiswa->id)
+            ->whereNotNull('grade')
+            ->with('exercise')
+            ->orderBy('submitted_at', 'asc')
+            ->get()
+            ->filter(function ($submission) {
+                return $submission->exercise != null;
+            })
+            ->map(function ($submission) {
+                return [
+                    'title' => $submission->exercise->title,
+                    'date' => $submission->submitted_at ? $submission->submitted_at->format('Y-m-d') : now()->format('Y-m-d'),
+                    'score' => $submission->grade,
+                    'type' => 'Assignment'
+                ];
+            });
+
+        // Calculate Average Scores
+        $quizAverage = $quizAttempts->avg('score') ?? 0;
+        $assignmentAverage = $assignmentSubmissions->avg('score') ?? 0;
+        $totalAverage = ($quizAttempts->isEmpty() && $assignmentSubmissions->isEmpty()) ? 0 :
+            collect([...$quizAttempts, ...$assignmentSubmissions])->avg('score');
+
+        // Trend Analysis
+        $allActivities = collect([...$quizAttempts, ...$assignmentSubmissions])->sortBy('date');
+        $recentActivities = $allActivities->take(-3);
+        $recentAverage = $recentActivities->avg('score') ?? 0;
+        
+        $trend = 0;
+        if ($totalAverage > 0) {
+            $trend = (($recentAverage - $totalAverage) / $totalAverage) * 100;
+        }
+
+        // Calculate Missed Activities
+        $missedQuizzes = \App\Models\Exercise::where('mahasiswa_id', $mahasiswa->id)
+            ->where('type', 'quiz')
+            ->whereDoesntHave('attempts')
+            ->count();
+
+        $missedAssignments = \App\Models\Exercise::where('mahasiswa_id', $mahasiswa->id)
+            ->where('type', 'assignment')
+            ->whereDoesntHave('submissions')
+            ->count();
+
+        // General Feedback
+        $generalFeedbacks = \App\Models\StudentFeedback::where('mahasiswa_id', $mahasiswa->id)
+            ->where('dosen_id', $dosenId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('dosen.student_development', compact(
+            'mahasiswa', 
+            'quizAttempts', 
+            'assignmentSubmissions',
+            'quizAverage',
+            'assignmentAverage',
+            'totalAverage',
+            'trend',
+            'recentAverage',
+            'missedQuizzes',
+            'missedAssignments',
+            'generalFeedbacks'
+        ));
+    }
+
+    public function storeStudentFeedback(Request $request, $mahasiswaId)
+    {
+        $user = Auth::user();
+        if ($user->role !== User::ROLE_DOSEN) {
+            return redirect('/')->with('error', 'Access denied.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Feedback must be at least 5 characters.');
+        }
+
+        $dosen = $user->dosen;
+        $dosenId = $dosen ? $dosen->id : $user->id;
+
+        \App\Models\StudentFeedback::create([
+            'dosen_id' => $dosenId,
+            'mahasiswa_id' => $mahasiswaId,
+            'content' => $request->content,
+        ]);
+
+        return redirect()->back()->with('success', 'Feedback added successfully.');
+    }
+
 }

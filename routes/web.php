@@ -6,6 +6,7 @@ use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\LearningDifficultyController;
 use App\Http\Controllers\LearningRecommendationController;
 use App\Http\Controllers\LearningRecommendationDetailController;
+use App\Http\Controllers\LearningDevelopmentController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\QuizController;
@@ -81,6 +82,14 @@ Route::get('/dosen/mahasiswa/{id}/progress', [DosenController::class, 'viewLearn
     ->middleware('auth')
     ->name('dosen.mahasiswa.progress');
 
+Route::get('/dosen/mahasiswa/{id}/development', [DosenController::class, 'viewStudentDevelopment'])
+    ->middleware('auth')
+    ->name('dosen.mahasiswa.development');
+
+Route::post('/dosen/mahasiswa/{id}/feedback', [DosenController::class, 'storeStudentFeedback'])
+    ->middleware('auth')
+    ->name('dosen.student.feedback');
+
 Route::delete('/dosen/mahasiswa-request/{id}/remove', [DosenController::class, 'removeMahasiswa'])
     ->middleware('auth')
     ->name('dosen.mahasiswa.remove');
@@ -96,7 +105,7 @@ Route::get('/mahasiswa/learning-recommendation/{id}',
     ->name('mahasiswa.learning.recommendation.detail');
 
 // Learning Development Route
-Route::get('/mahasiswa/learning-development', [MahasiswaController::class, 'learningDevelopment'])
+Route::get('/mahasiswa/learning-development', [LearningDevelopmentController::class, 'index'])
     ->middleware('auth')
     ->name('mahasiswa.learning.development');
 
@@ -168,6 +177,14 @@ Route::get('/dosen/mahasiswa/{id}/exercise/create', [ExerciseController::class, 
 Route::post('/dosen/mahasiswa/{id}/exercise', [ExerciseController::class, 'storeForMahasiswa'])
     ->middleware('auth')
     ->name('dosen.exercise.store');
+
+Route::get('/dosen/exercise/{id}/edit', [ExerciseController::class, 'edit'])
+    ->middleware('auth')
+    ->name('dosen.exercise.edit');
+
+Route::put('/dosen/exercise/{id}', [ExerciseController::class, 'update'])
+    ->middleware('auth')
+    ->name('dosen.exercise.update');
 
 // Quiz Routes
 Route::get('/dosen/mahasiswa/{id}/quiz/create', [QuizController::class, 'create'])

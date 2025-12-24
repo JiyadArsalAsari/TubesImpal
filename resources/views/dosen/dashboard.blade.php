@@ -111,17 +111,83 @@
         /* Profile Card Styles */
         .profile-card {
             background-color: #e6e7d9;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            color: black;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+            cursor: default;
+            color: #1e293b;
+            border: 1px solid #d1d5db;
         }
         
         .profile-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #9ca3af;
+        }
+
+        /* Button Styles */
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-action:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary-action {
+            background-color: #15803d; /* Green-700 */
+            color: white;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary-action:hover {
+            background-color: #166534; /* Green-800 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary-action {
+            background-color: white;
+            color: #334155; /* Slate-700 */
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-secondary-action:hover {
+            background-color: #f1f5f9; /* Slate-100 */
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        
+        /* Dark Green Secondary Option */
+        .btn-secondary-dark {
+            background-color: #334155; /* Slate-700 */
+            color: white;
+        }
+        .btn-secondary-dark:hover {
+            background-color: #1e293b; /* Slate-800 */
+        }
+
+        .btn-danger-action {
+            background-color: #fee2e2; /* Red-100 */
+            color: #991b1b; /* Red-800 */
+            border: 1px solid #fecaca; /* Red-200 */
+            font-weight: 700;
+        }
+
+        .btn-danger-action:hover {
+            background-color: #ef4444; /* Red-500 */
+            border-color: #ef4444;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
         }
         
         /* Search Bar Styles */
@@ -429,20 +495,24 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="profileCardsContainer">
                 @foreach($requests as $request)
                 <div class="profile-card">
-                    <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-start justify-between mb-6 pb-4 border-b border-gray-300">
                         <div class="flex items-center gap-4">
-                            <div class="bg-[#48bb78] rounded-full w-16 h-16 flex items-center justify-center">
-                                <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
+                            <div class="bg-[#395035] rounded-full w-14 h-14 flex items-center justify-center border border-[#436040] overflow-hidden">
+                                @if($request->mahasiswa && $request->mahasiswa->user && $request->mahasiswa->user->profile_picture)
+                                    <img src="{{ asset('storage/profile_pictures/' . $request->mahasiswa->user->profile_picture) }}" alt="Profile" class="w-full h-full object-cover">
+                                @else
+                                    <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
+                                @endif
                             </div>
                             <div>
-                                <h3 class="font-bold text-xl text-black">{{ $request->mahasiswa_name }}</h3>
-                                <p class="text-gray-600">Mahasiswa S1 Informatika</p>
+                                <h3 class="font-bold text-lg text-black">{{ $request->mahasiswa_name }}</h3>
+                                <p class="text-sm text-gray-700">Mahasiswa S1 Informatika</p>
                             </div>
                         </div>
                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                            @if($request->status == 'pending') status-pending 
-                            @elseif($request->status == 'accepted') status-accepted 
-                            @else status-rejected 
+                            @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
+                            @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
+                            @else bg-red-100 text-red-800 border border-red-300
                             @endif">
                             {{ ucfirst($request->status) }}
                         </span>
@@ -450,43 +520,46 @@
                     
                     <!-- Learning Progress for Accepted Requests -->
                     @if($request->status == 'accepted' && $request->mahasiswa)
-                    <div class="mt-4 pt-4 border-t border-gray-400">
-                        <div class="mb-4">
-                            <div class="bg-[#48bb78] rounded-xl px-4 py-3 text-center border border-[#38a169]">
-                                <div class="text-xs text-white">Status</div>
-                                <div class="text-sm font-semibold text-white">Connected</div>
-                            </div>
-                        </div>
+                    <div class="space-y-3">
+                        <!-- Primary Actions (Create) -->
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md"
-                                    onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
-                                <i class="fa-solid fa-eye text-lg"></i>
-                                <span>Details</span>
-                            </button>
-                            <button class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md"
+                            <button class="btn-action btn-primary-action"
                                     onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-file-circle-plus text-lg"></i>
-                                <span>Buat Assignment</span>
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Assignment</span>
                             </button>
-                            <button class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md"
+                            <button class="btn-action btn-primary-action"
                                     onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-question text-lg"></i>
-                                <span>Buat Quiz</span>
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Quiz</span>
                             </button>
-                            <button class="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md col-span-2"
+                        </div>
+
+                        <!-- Secondary Actions (View/Monitor) -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="btn-action btn-secondary-action"
+                                    onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
+                                <i class="fa-solid fa-eye"></i>
+                                <span class="hidden md:inline">Details</span>
+                            </button>
+                            <button class="btn-action btn-secondary-action"
+                                    onclick="window.location.href='{{ route('dosen.mahasiswa.development', $request->mahasiswa->id) }}'">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span class="hidden md:inline">Dev</span>
+                            </button>
+                            <button class="btn-action btn-secondary-action"
                                     onclick="window.location.href='{{ route('dosen.mahasiswa.exercises', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-list-check text-lg"></i>
-                                <span>Lihat Exercises</span>
+                                <i class="fa-solid fa-list-check"></i>
+                                <span class="hidden md:inline">List</span>
                             </button>
-                            <form action="{{ route('dosen.mahasiswa.remove', $request->id) }}" method="POST" class="col-span-2"
-                                  onsubmit="return confirm('Are you sure you want to remove this student?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">
-                                    <i class="fa-solid fa-user-minus text-lg"></i>
-                                    <span>Remove</span>
-                                </button>
-                            </form>
+                        </div>
+                        
+                        <!-- Destructive Action -->
+                        <div class="pt-2 mt-2 border-t border-gray-300">
+                             <button type="button" onclick="openRemoveModal('{{ route('dosen.mahasiswa.remove', $request->id) }}')" class="btn-action btn-danger-action">
+                                <i class="fa-solid fa-user-minus"></i>
+                                <span>Remove Student</span>
+                            </button>
                         </div>
                     </div>
                     @endif
@@ -495,6 +568,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Remove Student Confirmation Modal -->
+    <div id="removeStudentModal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-modal" onclick="closeRemoveStudentModal()">&times;</span>
+            <div class="mb-4">
+                <i class="fa-solid fa-circle-exclamation text-red-500 text-5xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Remove Student?</h2>
+            <p class="text-gray-300 mb-6">Apakah anda yakin ingin memutus integrasi dengan mahasiswa ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="closeRemoveStudentModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">Cancel</button>
+                <button id="confirmRemoveBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">Yes, Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Delete Form -->
+    <form id="deleteForm" action="" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
 
     <!-- Add Student Button -->
     <div class="add-student-btn" onclick="openAddStudentModal()">
@@ -617,6 +712,22 @@
             document.getElementById('addStudentModal').style.display = 'none';
         }
         
+        // Open remove student modal
+        function openRemoveModal(url) {
+            document.getElementById('deleteForm').action = url;
+            document.getElementById('removeStudentModal').style.display = 'flex';
+        }
+
+        // Close remove student modal
+        function closeRemoveStudentModal() {
+            document.getElementById('removeStudentModal').style.display = 'none';
+        }
+
+        // Handle confirm remove
+        document.getElementById('confirmRemoveBtn').addEventListener('click', function() {
+            document.getElementById('deleteForm').submit();
+        });
+
         // Handle form submission
         document.getElementById('addStudentForm').addEventListener('submit', function(e) {
             e.preventDefault();

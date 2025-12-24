@@ -259,6 +259,18 @@
         <main class="flex-grow flex flex-col justify-center w-full gap-16 pb-12 mt-8">
             <!-- Greeting -->
             <div class="text-center w-full px-4">
+                @if(session('success'))
+                    <div class="bg-green-500 text-white p-4 rounded-lg mb-6 shadow-lg max-w-5xl mx-auto">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="bg-red-500 text-white p-4 rounded-lg mb-6 shadow-lg max-w-5xl mx-auto">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <h1 class="text-2xl md:text-3xl font-bold text-white tracking-wide drop-shadow-md">
                     Hello {{ $mahasiswa->nama ?? Auth::user()->username }}, Welcome Back To StudyFlow!
                 </h1>

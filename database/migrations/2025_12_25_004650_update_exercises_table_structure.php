@@ -76,6 +76,13 @@ return new class extends Migration {
             }
 
             if (Schema::hasColumn('exercises', 'mahasiswa_id')) {
+                // Ensure the column is unsigned big integer before adding foreign key
+                try {
+                    \DB::statement('ALTER TABLE exercises MODIFY COLUMN mahasiswa_id BIGINT UNSIGNED NULL');
+                } catch (\Exception $e) {
+                    // Ignore if not MySQL
+                }
+                
                 $table->foreign('mahasiswa_id')->references('id')->on('mahasiswa')->onDelete('set null');
             }
         });

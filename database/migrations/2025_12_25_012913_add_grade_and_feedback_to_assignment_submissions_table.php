@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assignment_submissions', function (Blueprint $table) {
-            $table->integer('grade')->nullable()->after('submitted_at');
-            $table->text('feedback')->nullable()->after('grade');
+            if (!Schema::hasColumn('assignment_submissions', 'grade')) {
+                $table->integer('grade')->nullable()->after('submitted_at');
+            }
+            if (!Schema::hasColumn('assignment_submissions', 'feedback')) {
+                $table->text('feedback')->nullable()->after('grade');
+            }
         });
     }
 

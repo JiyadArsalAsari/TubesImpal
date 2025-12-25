@@ -112,9 +112,34 @@
             </div>
 
             <div class="bg-[#395035] text-white rounded-3xl shadow-xl p-6 border border-[#436040] mb-8">
-                <div class="relative">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="exerciseSearch" placeholder="Cari assignment atau quiz..." class="w-full pl-12 pr-4 py-3 rounded-xl bg-[#2f3d2c] text-white border border-[#436040] placeholder-gray-400 focus:outline-none focus:border-[#48bb78] shadow-md transition-all">
+                <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                    <div class="relative w-full md:w-1/3">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="exerciseSearch" placeholder="Cari assignment atau quiz..." class="w-full pl-12 pr-4 py-3 rounded-xl bg-[#2f3d2c] text-white border border-[#436040] placeholder-gray-400 focus:outline-none focus:border-[#48bb78] shadow-md transition-all">
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <!-- Status Filter -->
+                        <select onchange="window.location.href=this.value" class="px-4 py-2 rounded-xl text-sm font-semibold border border-[#436040] bg-[#2f3d2c] text-white focus:outline-none focus:border-[#48bb78] cursor-pointer hover:bg-[#395035] transition-all">
+                            <option value="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'type' => request('type')]) }}" {{ !request('status') ? 'selected' : '' }}>All Status</option>
+                            <option value="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'type' => request('type'), 'status' => 'draft']) }}" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                            <option value="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'type' => request('type'), 'status' => 'published']) }}" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
+                            <option value="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'type' => request('type'), 'status' => 'completed']) }}" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                        </select>
+
+                        <!-- Type Filter -->
+                        <a href="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'status' => request('status')]) }}" 
+                           class="px-4 py-2 rounded-xl text-sm font-semibold border border-[#436040] transition-all {{ !request('type') ? 'bg-[#1d8f3b] text-white' : 'bg-[#2f3d2c] text-gray-300 hover:bg-[#395035]' }}">
+                            All Types
+                        </a>
+                        <a href="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'type' => 'assignment', 'status' => request('status')]) }}" 
+                           class="px-4 py-2 rounded-xl text-sm font-semibold border border-[#436040] transition-all {{ request('type') == 'assignment' ? 'bg-[#1d8f3b] text-white' : 'bg-[#2f3d2c] text-gray-300 hover:bg-[#395035]' }}">
+                            Assignment
+                        </a>
+                        <a href="{{ route('dosen.mahasiswa.exercises', ['id' => $mahasiswa->id, 'type' => 'quiz', 'status' => request('status')]) }}" 
+                           class="px-4 py-2 rounded-xl text-sm font-semibold border border-[#436040] transition-all {{ request('type') == 'quiz' ? 'bg-[#1d8f3b] text-white' : 'bg-[#2f3d2c] text-gray-300 hover:bg-[#395035]' }}">
+                            Quiz
+                        </a>
+                    </div>
                 </div>
             </div>
 

@@ -260,7 +260,7 @@
                     <div class="text-xs text-gray-400">{{ Auth::user()->role ?? 'User' }}</div>
                 </div>
             </div>
-            <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container" onclick="window.location.href='{{ Auth::user() && Auth::user()->role == 'dosen' ? route('dosen.dashboard') : route('mahasiswa.dashboard') }}'">
+            <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container" onclick="window.location.href='{{ Auth::user() && Auth::user()->role == 'dosen' ? route('dosen.dashboard') : (Auth::user() && Auth::user()->role == 'admin' ? route('admin.dashboard') : route('mahasiswa.dashboard')) }}'">
                 <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
             </div>
             <div class="flex gap-6 text-3xl relative">

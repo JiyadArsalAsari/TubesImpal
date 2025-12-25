@@ -68,14 +68,14 @@ return new class extends Migration {
 
             // However, we want to update mahasiswa_id FK to 'set null' instead of 'cascade'.
             // First we need to drop the existing foreign key.
-            try {
-                $table->dropForeign(['mahasiswa_id']);
-            } catch (\Exception $e) {
-                // connection/driver might throw if not exists, but usually we prefer to check. 
-                // In standard Laravel mysql driver, dropForeign by array generates name 'exercises_mahasiswa_id_foreign'.
-            }
-
             if (Schema::hasColumn('exercises', 'mahasiswa_id')) {
+                try {
+                   $table->dropForeign(['mahasiswa_id']);
+                } catch (\Exception $e) {
+                   // connection/driver might throw if not exists, but usually we prefer to check. 
+                   // In standard Laravel mysql driver, dropForeign by array generates name 'exercises_mahasiswa_id_foreign'.
+                }
+
                 // Ensure the column is unsigned big integer before adding foreign key
                 try {
                     \DB::statement('ALTER TABLE exercises MODIFY COLUMN mahasiswa_id BIGINT UNSIGNED NULL');

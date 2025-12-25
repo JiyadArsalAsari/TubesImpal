@@ -492,80 +492,129 @@
 
         <!-- Profile Cards Section -->
         <div class="max-w-6xl mx-auto px-6 mb-16">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="profileCardsContainer">
-                @foreach($requests as $request)
-                <div class="profile-card">
-                    <div class="flex items-start justify-between mb-6 pb-4 border-b border-gray-300">
-                        <div class="flex items-center gap-4">
-                            <div class="bg-[#395035] rounded-full w-14 h-14 flex items-center justify-center border border-[#436040] overflow-hidden">
-                                @if($request->mahasiswa && $request->mahasiswa->user && $request->mahasiswa->user->profile_picture)
-                                    <img src="{{ asset('storage/profile_pictures/' . $request->mahasiswa->user->profile_picture) }}" alt="Profile" class="w-full h-full object-cover">
-                                @else
-                                    <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
-                                @endif
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-black">{{ $request->mahasiswa_name }}</h3>
-                                <p class="text-sm text-gray-700">Mahasiswa S1 Informatika</p>
-                            </div>
+            @if($requests->isEmpty())
+                <div class="bg-[#1F2B1E] rounded-2xl p-12 text-center border border-[#2D3A2D]">
+                    <div class="flex justify-center mb-6">
+                        <div class="bg-gray-800 rounded-full w-16 h-16 flex items-center justify-center">
+                            <i class="fa-solid fa-users text-white text-2xl"></i>
                         </div>
-                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                            @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
-                            @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
-                            @else bg-red-100 text-red-800 border border-red-300
-                            @endif">
-                            {{ ucfirst($request->status) }}
-                        </span>
                     </div>
-                    
-                    <!-- Learning Progress for Accepted Requests -->
-                    @if($request->status == 'accepted' && $request->mahasiswa)
-                    <div class="space-y-3">
-                        <!-- Primary Actions (Create) -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <button class="btn-action btn-primary-action"
-                                    onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>Assignment</span>
-                            </button>
-                            <button class="btn-action btn-primary-action"
-                                    onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>Quiz</span>
-                            </button>
-                        </div>
-
-                        <!-- Secondary Actions (View/Monitor) -->
-                        <div class="grid grid-cols-3 gap-2">
-                            <button class="btn-action btn-secondary-action"
-                                    onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
-                                <i class="fa-solid fa-eye"></i>
-                                <span class="hidden md:inline">Details</span>
-                            </button>
-                            <button class="btn-action btn-secondary-action"
-                                    onclick="window.location.href='{{ route('dosen.mahasiswa.development', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-chart-line"></i>
-                                <span class="hidden md:inline">Dev</span>
-                            </button>
-                            <button class="btn-action btn-secondary-action"
-                                    onclick="window.location.href='{{ route('dosen.mahasiswa.exercises', $request->mahasiswa->id) }}'">
-                                <i class="fa-solid fa-list-check"></i>
-                                <span class="hidden md:inline">List</span>
-                            </button>
+                    <h3 class="text-white font-bold text-3xl mb-4">Belum Ada Mahasiswa</h3>
+                    <p class="text-gray-300 text-xl mb-8">Anda belum terintegrasi dengan mahasiswa manapun.</p>
+                    <button onclick="openAddStudentModal()" 
+                       class="bg-[#48bb78] hover:bg-[#38a169] text-white font-bold py-3 px-8 rounded-full inline-flex items-center transition shadow-lg">
+                        <i class="fa-solid fa-plus mr-2"></i>
+                        Tambah Mahasiswa
+                    </button>
+                </div>
+            @else
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="profileCardsContainer">
+                    @foreach($requests as $request)
+                    <div class="profile-card">
+                        <div class="flex items-start justify-between mb-6 pb-4 border-b border-gray-300">
+                            <div class="flex items-center gap-4">
+                                <div class="bg-[#395035] rounded-full w-14 h-14 flex items-center justify-center border border-[#436040] overflow-hidden">
+                                    @if($request->mahasiswa && $request->mahasiswa->user && $request->mahasiswa->user->profile_picture)
+                                        <img src="{{ asset('storage/profile_pictures/' . $request->mahasiswa->user->profile_picture) }}" alt="Profile" class="w-full h-full object-cover">
+                                    @else
+                                        <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-black">{{ $request->mahasiswa_name }}</h3>
+                                    <p class="text-sm text-gray-700">Mahasiswa</p>
+                                </div>
+                            </div>
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
+                                @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
+                                @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
+                                @else bg-red-100 text-red-800 border border-red-300
+                                @endif">
+                                {{ ucfirst($request->status) }}
+                            </span>
                         </div>
                         
-                        <!-- Destructive Action -->
-                        <div class="pt-2 mt-2 border-t border-gray-300">
-                             <button type="button" onclick="openRemoveModal('{{ route('dosen.mahasiswa.remove', $request->id) }}')" class="btn-action btn-danger-action">
-                                <i class="fa-solid fa-user-minus"></i>
-                                <span>Remove Student</span>
-                            </button>
+                        <!-- Learning Progress for Accepted Requests -->
+                        @if($request->status == 'accepted' && $request->mahasiswa)
+                        <div class="space-y-3">
+                            <!-- Primary Actions (Create) -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="btn-action btn-primary-action"
+                                        onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Assignment</span>
+                                </button>
+                                <button class="btn-action btn-primary-action"
+                                        onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Quiz</span>
+                                </button>
+                            </div>
+
+                            <!-- Secondary Actions (View/Monitor) -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="btn-action btn-secondary-action"
+                                        onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
+                                    <i class="fa-solid fa-eye"></i>
+                                    <span class="hidden md:inline">Details</span>
+                                </button>
+                                <button class="btn-action btn-secondary-action"
+                                        onclick="window.location.href='{{ route('dosen.mahasiswa.development', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                    <span class="hidden md:inline">Dev</span>
+                                </button>
+                                <button class="btn-action btn-secondary-action"
+                                        onclick="window.location.href='{{ route('dosen.mahasiswa.exercises', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-list-check"></i>
+                                    <span class="hidden md:inline">List</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Destructive Action -->
+                            <div class="pt-2 mt-2 border-t border-gray-300">
+                                 <button type="button" onclick="openRemoveModal('{{ route('dosen.mahasiswa.remove', $request->id) }}')" class="btn-action btn-danger-action">
+                                    <i class="fa-solid fa-user-minus"></i>
+                                    <span>Remove Student</span>
+                                </button>
+                            </div>
                         </div>
+                        @elseif($request->status == 'pending')
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="btn-action bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300"
+                                        onclick="resendNotification('{{ route('dosen.request.resend', $request->id) }}')">
+                                    <i class="fa-solid fa-bell"></i>
+                                    <span>Resend</span>
+                                </button>
+                                <button class="btn-action bg-red-100 text-red-800 hover:bg-red-200 border border-red-300"
+                                        onclick="openCancelModal('{{ route('dosen.request.cancel', $request->id) }}')">
+                                    <i class="fa-solid fa-ban"></i>
+                                    <span>Cancel</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 text-center italic">Waiting for student acceptance...</p>
+                        </div>
+                        @elseif($request->status == 'rejected')
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="btn-action bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300"
+                                        onclick="resendNotification('{{ route('dosen.request.resend', $request->id) }}')">
+                                    <i class="fa-solid fa-rotate-right"></i>
+                                    <span>Resend</span>
+                                </button>
+                                <button class="btn-action btn-danger-action"
+                                        onclick="openRemoveModal('{{ route('dosen.mahasiswa.remove', $request->id) }}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span>Remove</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-red-500 text-center italic font-medium">{{ $request->mahasiswa_name }} menolak permintaan anda</p>
+                        </div>
+                        @endif
                     </div>
-                    @endif
+                    @endforeach
                 </div>
-                @endforeach
-            </div>
+            @endif
         </div>
     </div>
 
@@ -585,16 +634,44 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+    <!-- Cancel Request Confirmation Modal -->
+    <div id="cancelRequestModal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-modal" onclick="closeCancelModal()">&times;</span>
+            <div class="mb-4">
+                <i class="fa-solid fa-ban text-red-500 text-5xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Cancel Request?</h2>
+            <p class="text-gray-300 mb-6">Are you sure you want to cancel this integration request?</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="closeCancelModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">No, Keep It</button>
+                <button id="confirmCancelBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Action Forms -->
+    <form id="resendForm" action="" method="POST" style="display: none;">
+        @csrf
+    </form>
+    
+    <form id="cancelForm" action="" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
+    <!-- Hidden Delete Form (Existing) -->
     <form id="deleteForm" action="" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
     </form>
 
     <!-- Add Student Button -->
+    @if($requests->isNotEmpty())
     <div class="add-student-btn" onclick="openAddStudentModal()">
         <i class="fa-solid fa-plus"></i>
     </div>
+    @endif
     
     <!-- Add Student Modal -->
     <div id="addStudentModal" class="modal">
@@ -616,6 +693,37 @@
     </div>
 
     <script>
+        // Request Actions
+        function resendNotification(url) {
+            const form = document.getElementById('resendForm');
+            form.action = url;
+            form.submit();
+        }
+
+        function openCancelModal(url) {
+            const modal = document.getElementById('cancelRequestModal');
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+            
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+            
+            confirmBtn.onclick = function() {
+                const form = document.getElementById('cancelForm');
+                form.action = url;
+                form.submit();
+            };
+        }
+
+        function closeCancelModal() {
+            const modal = document.getElementById('cancelRequestModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
         // Add event listeners after DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Add click event to bell icon

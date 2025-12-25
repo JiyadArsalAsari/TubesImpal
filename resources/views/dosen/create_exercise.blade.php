@@ -8,6 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        /* Custom calendar icon color for date inputs */
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
         .profile-popup { display: none; position: absolute; top: 60px; right: 20px; background-color: #1f2f1f; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 250px; padding: 20px; }
         .profile-popup.show { display: block; }
         .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 999; }
@@ -160,10 +166,6 @@
                     <input type="datetime-local" name="deadline" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400">
                 </div>
 
-                <div>
-                    <label class="block text-sm text-gray-200 mb-1">Maksimal Percobaan</label>
-                    <input type="number" name="max_attempts" min="1" max="10" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Misal 3" value="1">
-                </div>
 
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">File Assignment (opsional)</label>

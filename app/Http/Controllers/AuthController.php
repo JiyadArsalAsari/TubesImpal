@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -20,20 +21,27 @@ class AuthController extends Controller
 
     public function loginForm(Request $request)
     {
-        $role = $request->query('role');
-        return view('auth.login', compact('role'));
+        return view('auth.login');
     }
 
     public function register(Request $request)
     {
         // Validasi input
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:mahasiswa,dosen',
         ]);
+
+        if ($validator->fails()) {
+            // Hanya kembalikan input yang valid, input yang error (dan password) dikosongkan
+            $failedFields = $validator->errors()->keys();
+            $inputsToFlash = $request->except(array_merge($failedFields, ['password', 'password_confirmation']));
+            
+            return back()->withErrors($validator)->withInput($inputsToFlash);
+        }
 
         // Simpan ke tabel users
         $user = User::create([
@@ -72,11 +80,13 @@ class AuthController extends Controller
         // Login otomatis setelah registrasi
         Auth::login($user);
 
-        // Redirect berdasarkan role
-        if ($user->role == 'mahasiswa') {
-            return redirect('/mahasiswa/dashboard');
-        } else {
+        // Redirect berdasarkan role / admin flag
+        if ($user->is_admin) {
+            return redirect('/admin/dashboard');
+        } elseif ($user->role == 'dosen') {
             return redirect('/dosen/dashboard');
+        } else {
+            return redirect('/mahasiswa/dashboard');
         }
     }
 
@@ -99,27 +109,32 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Redirect berdasarkan role
             $user = Auth::user();
-            
-            // Jika ada role dari parameter, cek apakah sesuai dengan role user
-            if ($request->has('role') && $request->role !== $user->role) {
+
+            // Check if login is restricted to a specific role
+            if ($request->has('role') && $request->role && $user->role !== $request->role) {
                 Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                
                 return back()->withErrors([
-                    'username_or_email' => 'Anda tidak memiliki akses sebagai ' . $request->role . '.',
+                    'username_or_email' => 'Salah login! (Akun Anda: ' . ucfirst($user->role) . ')',
                 ]);
             }
-            
-            if ($user->role == 'mahasiswa') {
-                return redirect('/mahasiswa/dashboard');
-            } else {
+
+            // Redirect berdasarkan role
+            if ($user->is_admin) {
+                return redirect('/admin/dashboard');
+            } elseif ($user->role == 'dosen') {
                 return redirect('/dosen/dashboard');
+            } else {
+                return redirect('/mahasiswa/dashboard');
             }
         }
 
         // Jika login gagal
         return back()->withErrors([
-            'username_or_email' => 'Kredensial yang diberikan tidak cocok dengan data kami.',
+            'username_or_email' => 'Invalid User ID or Password!',
         ]);
     }
 

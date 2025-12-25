@@ -211,11 +211,13 @@ class MahasiswaController extends Controller
             // Calculate Missed Activities
             $missedQuizzes = \App\Models\Exercise::where('mahasiswa_id', $mahasiswa->id)
                 ->where('type', 'quiz')
+                ->where('status', 'published')
                 ->whereDoesntHave('attempts')
                 ->count();
 
             $missedAssignments = \App\Models\Exercise::where('mahasiswa_id', $mahasiswa->id)
                 ->where('type', 'assignment')
+                ->where('status', 'published')
                 ->whereDoesntHave('submissions')
                 ->count();
 

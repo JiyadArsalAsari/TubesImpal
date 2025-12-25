@@ -1,0 +1,29 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class AdminSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Check if admin already exists
+        if (!User::where('username', 'admin')->exists()) {
+            User::create([
+                'name' => 'Administrator',
+                'username' => 'admin',
+                'email' => 'admin@studyflow.com',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'is_admin' => true,
+            ]);
+        }
+    }
+}

@@ -107,6 +107,7 @@
                     </div>
                 </div>
 
+                @if($quizAttempts->isNotEmpty() || $assignmentSubmissions->isNotEmpty())
                 <!-- Main Chart Section -->
                 <div class="bg-[#e6e7d9] text-black rounded-3xl p-8 shadow-xl mb-8">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -138,6 +139,7 @@
                         <canvas id="performanceChart"></canvas>
                     </div>
                 </div>
+                @endif
 
                 <!-- Detailed Stats Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -313,17 +315,23 @@
             }
             dates.sort();
 
-            // Map data
+            // Map data with aggregation (Average per day)
             const quizScores = dates.map(date => {
                 if (currentType === 'assignment') return null;
-                const attempt = filteredQuiz.find(q => q.date === date);
-                return attempt ? attempt.score : null;
+                const attemptsOnDate = filteredQuiz.filter(q => q.date === date);
+                if (attemptsOnDate.length === 0) return null;
+                
+                const avg = attemptsOnDate.reduce((sum, item) => sum + item.score, 0) / attemptsOnDate.length;
+                return parseFloat(avg.toFixed(1)); // Return average with 1 decimal
             });
 
             const assignmentScores = dates.map(date => {
                 if (currentType === 'quiz') return null;
-                const submission = filteredAssignment.find(a => a.date === date);
-                return submission ? submission.score : null;
+                const submissionsOnDate = filteredAssignment.filter(a => a.date === date);
+                if (submissionsOnDate.length === 0) return null;
+                
+                const avg = submissionsOnDate.reduce((sum, item) => sum + item.score, 0) / submissionsOnDate.length;
+                return parseFloat(avg.toFixed(1)); // Return average with 1 decimal
             });
 
             renderChart(dates, quizScores, assignmentScores);

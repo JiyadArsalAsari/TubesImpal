@@ -365,18 +365,11 @@
                                                     class="bg-[#202c23] text-white text-sm font-semibold px-4 py-2 rounded-full border border-[#6fbf69] hover:bg-[#26402d] transition text-center">
                                                     Attempt
                                                 </a>
-                                            @elseif($item->file_attachment)
+                                            @elseif($item->type === 'assignment')
                                                 <a href="{{ route('mahasiswa.assignment.attempt', $item->id) }}"
                                                     class="bg-[#202c23] text-white text-sm font-semibold px-4 py-2 rounded-full border border-[#6fbf69] hover:bg-[#26402d] transition text-center">
                                                     Attempt
                                                 </a>
-                                            @elseif($item->link)
-                                                <a href="{{ $item->link }}" target="_blank"
-                                                    class="bg-[#202c23] text-white text-sm font-semibold px-4 py-2 rounded-full border border-[#6fbf69] hover:bg-[#26402d] transition text-center">
-                                                    Attempt
-                                                </a>
-                                            @else
-                                                <span class="text-xs text-gray-200">Tidak ada link</span>
                                             @endif
                                         </div>
                                     @endforeach
@@ -724,24 +717,43 @@
                     });
 
                     html += `
-                        <div class="bg-[#395035] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-[#436040] shadow-lg">
-                            <div class="flex items-start gap-3 text-white">
-                                <div class="bg-[#4a6b46] text-white rounded-xl px-3 py-2 text-xs font-semibold uppercase">
-                                    ${item.type.toUpperCase()}
+                        <div class="bg-[#395035] rounded-2xl p-4 border border-[#436040] shadow-lg">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div class="flex items-start gap-3 text-white">
+                                    <div class="bg-[#4a6b46] text-white rounded-xl px-3 py-2 text-xs font-semibold uppercase">
+                                        ${item.type.toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold">${item.title}</p>
+                                        <p class="text-xs text-gray-200 mt-1">
+                                            Completed: ${completedTime}
+                                        </p>
+                                        ${item.description ? `<p class="text-xs text-gray-300 mt-1">${item.description.substring(0, 120)}${item.description.length > 120 ? '...' : ''}</p>` : ''}
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="font-semibold">${item.title}</p>
-                                    <p class="text-xs text-gray-200 mt-1">
-                                        Completed: ${completedTime}
-                                    </p>
-                                    ${item.description ? `<p class="text-xs text-gray-300 mt-1">${item.description.substring(0, 120)}${item.description.length > 120 ? '...' : ''}</p>` : ''}
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                        COMPLETED
+                                    </span>
+                                    ${item.grade !== undefined && item.grade !== null ? `
+                                        <span class="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+                                            Score: ${item.grade}/100
+                                        </span>
+                                    ` : ''}
+                                    ${item.attempts_count < item.max_attempts ? `
+                                        <a href="${item.type === 'quiz' ? `/mahasiswa/quiz/${item.id}/attempt` : `/mahasiswa/assignment/${item.id}/attempt`}" 
+                                           class="bg-[#eda12f] hover:bg-[#d68f28] text-white text-xs font-bold px-3 py-1 rounded-full transition cursor-pointer no-underline text-center">
+                                           Attempt Again (${item.attempts_count}/${item.max_attempts})
+                                        </a>
+                                    ` : ''}
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                                    COMPLETED
-                                </span>
-                            </div>
+                            ${item.feedback ? `
+                                <div class="w-full mt-3 pt-3 border-t border-gray-600/50">
+                                    <p class="text-xs text-gray-300 font-semibold mb-1"><i class="fa-solid fa-comment-dots mr-2"></i>Feedback:</p>
+                                    <p class="text-sm text-gray-200 italic">"${item.feedback}"</p>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 });

@@ -58,8 +58,25 @@ class ExerciseController extends Controller
 
         $exercises = Exercise::where('mahasiswa_id', $mahasiswa->id)
             ->where('status', 'completed')
+            ->with(['submissions' => function($query) {
+                $query->orderBy('submitted_at', 'desc');
+            }, 'attempts'])
             ->orderBy('updated_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($exercise) {
+                if ($exercise->type === 'assignment') {
+                    $submission = $exercise->submissions->first();
+                    $exercise->grade = $submission ? $submission->grade : null;
+                    $exercise->feedback = $submission ? $submission->feedback : null;
+                    $exercise->attempts_count = $exercise->submissions->count();
+                } else {
+                    $exercise->attempts_count = $exercise->attempts->count();
+                }
+                // Ensure max_attempts is available
+                $exercise->max_attempts = $exercise->max_attempts ?? 1;
+                
+                return $exercise;
+            });
 
         return response()->json(['exercises' => $exercises]);
     }
@@ -268,7 +285,18 @@ class ExerciseController extends Controller
         }
 
         if ($exercise->status !== 'published') {
-            return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+            // Allow access if status is completed AND attempts < max_attempts
+             if ($exercise->status === 'completed') {
+                $existingAttempts = AssignmentSubmission::where('exercise_id', $exercise->id)
+                    ->where('mahasiswa_id', $mahasiswa->id)
+                    ->count();
+                
+                if ($existingAttempts >= $exercise->max_attempts) {
+                    return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment sudah selesai dan batas percobaan habis.');
+                }
+            } else {
+                return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+            }
         }
 
         return view('mahasiswa.assignment_attempt', compact('exercise'));
@@ -332,7 +360,18 @@ class ExerciseController extends Controller
             ->firstOrFail();
 
         if ($exercise->status !== 'published') {
-            return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+            // Allow access if status is completed AND attempts < max_attempts
+             if ($exercise->status === 'completed') {
+                $existingAttempts = AssignmentSubmission::where('exercise_id', $exercise->id)
+                    ->where('mahasiswa_id', $mahasiswa->id)
+                    ->count();
+                
+                if ($existingAttempts >= $exercise->max_attempts) {
+                    return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment sudah selesai dan batas percobaan habis.');
+                }
+            } else {
+                return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+            }
         }
 
         // Validate submission
@@ -363,18 +402,14 @@ class ExerciseController extends Controller
             $filePath = $file->storeAs('submissions', $fileName, 'public');
         }
 
-        // Create or update submission
-        $submission = AssignmentSubmission::updateOrCreate(
-            [
-                'exercise_id' => $exercise->id,
-                'mahasiswa_id' => $mahasiswa->id,
-            ],
-            [
-                'text_submission' => $validated['text_answer'] ?? null,
-                'file_submission' => $filePath,
-                'submitted_at' => now(),
-            ]
-        );
+        // Create new submission
+        $submission = AssignmentSubmission::create([
+            'exercise_id' => $exercise->id,
+            'mahasiswa_id' => $mahasiswa->id,
+            'text_submission' => $validated['text_answer'] ?? null,
+            'file_submission' => $filePath,
+            'submitted_at' => now(),
+        ]);
 
         // Mark exercise as completed
         \Log::info('Updating assignment exercise status', [

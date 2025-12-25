@@ -12,6 +12,8 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\DeadlineController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AcademicPeriodController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +95,14 @@ Route::post('/dosen/mahasiswa/{id}/feedback', [DosenController::class, 'storeStu
 Route::delete('/dosen/mahasiswa-request/{id}/remove', [DosenController::class, 'removeMahasiswa'])
     ->middleware('auth')
     ->name('dosen.mahasiswa.remove');
+
+Route::post('/dosen/request/{id}/resend', [DosenController::class, 'resendRequest'])
+    ->middleware('auth')
+    ->name('dosen.request.resend');
+
+Route::delete('/dosen/request/{id}/cancel', [DosenController::class, 'cancelRequest'])
+    ->middleware('auth')
+    ->name('dosen.request.cancel');
 
 Route::get('/mahasiswa/learning-recommendation', 
     [LearningRecommendationController::class, 'index'])
@@ -230,3 +240,23 @@ Route::post('/profile', [AuthController::class, 'updateProfile'])
 Route::delete('/profile/photo', [AuthController::class, 'deleteProfilePhoto'])
     ->middleware('auth')
     ->name('profile.delete.photo');
+
+// Admin Routes
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/admin/users/create', [AdminController::class, 'createUser'])->name('admin.users.create');
+    Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
+    Route::get('/admin/users/{id}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
+    Route::put('/admin/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
+
+    // Academic Period Routes
+    Route::get('/admin/periods', [AcademicPeriodController::class, 'index'])->name('admin.periods.index');
+    Route::get('/admin/periods/create', [AcademicPeriodController::class, 'create'])->name('admin.periods.create');
+    Route::post('/admin/periods', [AcademicPeriodController::class, 'store'])->name('admin.periods.store');
+    Route::get('/admin/periods/{id}/edit', [AcademicPeriodController::class, 'edit'])->name('admin.periods.edit');
+    Route::put('/admin/periods/{id}', [AcademicPeriodController::class, 'update'])->name('admin.periods.update');
+    Route::delete('/admin/periods/{id}', [AcademicPeriodController::class, 'destroy'])->name('admin.periods.destroy');
+    Route::post('/admin/periods/{id}/activate', [AcademicPeriodController::class, 'activate'])->name('admin.periods.activate');
+});

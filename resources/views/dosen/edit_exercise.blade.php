@@ -143,6 +143,14 @@
                 @method('PUT')
                 
                 <div>
+                    <label class="block text-sm text-gray-200 mb-1">Status</label>
+                    <select name="status" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400">
+                        <option value="draft" {{ old('status', $exercise->status) == 'draft' ? 'selected' : '' }}>Draft</option>
+                        <option value="published" {{ old('status', $exercise->status) == 'published' ? 'selected' : '' }}>Published</option>
+                    </select>
+                </div>
+
+                <div>
                     <label class="block text-sm text-gray-200 mb-1">Judul</label>
                     <input type="text" name="title" value="{{ old('title', $exercise->title) }}" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Contoh: Assignment 1 - Introduction to UI/UX Design" required>
                 </div>
@@ -160,11 +168,6 @@
                 <div>
                     <label class="block text-sm text-gray-200 mb-1">Link (opsional)</label>
                     <input type="url" name="link" value="{{ old('link', $exercise->link) }}" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="https://example.com">
-                </div>
-
-                <div>
-                    <label class="block text-sm text-gray-200 mb-1">Maksimal Percobaan</label>
-                    <input type="number" name="max_attempts" min="1" max="10" value="{{ old('max_attempts', $exercise->max_attempts ?? 1) }}" class="w-full rounded-lg bg-[#1f2f1f] text-white border border-[#436040] p-3 placeholder-gray-400" placeholder="Misal 3">
                 </div>
 
                 <div>

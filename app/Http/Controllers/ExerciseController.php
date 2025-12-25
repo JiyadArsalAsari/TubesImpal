@@ -29,7 +29,7 @@ class ExerciseController extends Controller
         }
 
         $exercises = Exercise::where('mahasiswa_id', $mahasiswa->id)
-            ->where('status', '!=', 'completed')
+            ->where('status', 'published')
             ->orderBy('deadline', 'asc')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -202,7 +202,7 @@ class ExerciseController extends Controller
             'description' => 'nullable|string',
             'deadline' => 'nullable|date',
             'link' => 'nullable|url',
-            'max_attempts' => 'nullable|integer|min:1|max:10',
+            'status' => 'required|in:draft,published',
             'file_attachment' => 'nullable|file|mimes:pdf,doc,docx,zip,rar,jpg,jpeg,png|max:10240',
         ]);
 
@@ -223,7 +223,7 @@ class ExerciseController extends Controller
         $exercise->description = $validated['description'] ?? null;
         $exercise->deadline = $validated['deadline'] ?? null;
         $exercise->link = $validated['link'] ?? null;
-        $exercise->max_attempts = $validated['max_attempts'] ?? 1;
+        $exercise->status = $validated['status'];
         
         $exercise->save();
 
@@ -267,6 +267,10 @@ class ExerciseController extends Controller
             return redirect('/')->with('error', 'Assignment tidak ditemukan atau tidak ditugaskan kepada Anda.');
         }
 
+        if ($exercise->status !== 'published') {
+            return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+        }
+
         return view('mahasiswa.assignment_attempt', compact('exercise'));
     }
 
@@ -289,6 +293,10 @@ class ExerciseController extends Controller
             ->where('mahasiswa_id', $mahasiswa->id)
             ->where('type', 'assignment')
             ->firstOrFail();
+
+        if ($exercise->status !== 'published') {
+            return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+        }
 
         if (!$exercise->file_attachment) {
             return redirect()->back()->with('error', 'File tidak ditemukan.');
@@ -322,6 +330,10 @@ class ExerciseController extends Controller
             ->where('mahasiswa_id', $mahasiswa->id)
             ->where('type', 'assignment')
             ->firstOrFail();
+
+        if ($exercise->status !== 'published') {
+            return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment belum dipublikasikan.');
+        }
 
         // Validate submission
         $validated = $request->validate([

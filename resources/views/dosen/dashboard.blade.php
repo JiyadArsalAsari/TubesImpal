@@ -540,10 +540,10 @@
                                 </div>
                             </div>
                             <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                                                                @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
-                                                                @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
-                                                                @else bg-red-100 text-red-800 border border-red-300
-                                                                @endif">
+                                @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
+                                @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
+                                @else bg-red-100 text-red-800 border border-red-300
+                                @endif">
                                 {{ ucfirst($request->status) }}
                             </span>
                         </div>
@@ -629,16 +629,48 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+    <!-- Cancel Request Confirmation Modal -->
+    <div id="cancelRequestModal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-modal" onclick="closeCancelModal()">&times;</span>
+            <div class="mb-4">
+                <i class="fa-solid fa-ban text-red-500 text-5xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Cancel Request?</h2>
+            <p class="text-gray-300 mb-6">Are you sure you want to cancel this integration request?</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="closeCancelModal()"
+                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">No, Keep
+                    It</button>
+                <button id="confirmCancelBtn"
+                    class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">Yes,
+                    Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Action Forms -->
+    <form id="resendForm" action="" method="POST" style="display: none;">
+        @csrf
+    </form>
+
+    <form id="cancelForm" action="" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
+    <!-- Hidden Delete Form (Existing) -->
     <form id="deleteForm" action="" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
     </form>
 
     <!-- Add Student Button -->
-    <div class="add-student-btn" onclick="openAddStudentModal()">
-        <i class="fa-solid fa-plus"></i>
-    </div>
+    @if($requests->isNotEmpty())
+        <div class="add-student-btn" onclick="openAddStudentModal()">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+    @endif
 
     <!-- Add Student Modal -->
     <div id="addStudentModal" class="modal">
@@ -757,7 +789,6 @@
 
             modal.classList.add('hidden');
         }
-
         // Add event listeners after DOM is loaded
         document.addEventListener('DOMContentLoaded', function () {
             // Add click event to bell icon

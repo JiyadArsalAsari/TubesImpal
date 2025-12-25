@@ -248,7 +248,7 @@ class DosenController extends Controller
         }
     }
     
-    public function viewExercises($mahasiswaId)
+    public function viewExercises(Request $request, $mahasiswaId)
     {
         try {
             // Get the authenticated user
@@ -266,12 +266,12 @@ class DosenController extends Controller
             $dosenId = $dosen ? $dosen->id : $user->id;
             
             // Check if this mahasiswa is connected to this dosen
-            $request = DosenMahasiswaRequest::where('dosen_id', $dosenId)
+            $dosenMahasiswaRequest = DosenMahasiswaRequest::where('dosen_id', $dosenId)
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status', 'accepted')
                 ->first();
                 
-            if (!$request) {
+            if (!$dosenMahasiswaRequest) {
                 return redirect('/dosen/dashboard')->with('error', 'You do not have permission to view this student\'s exercises.');
             }
             
@@ -279,11 +279,19 @@ class DosenController extends Controller
             $mahasiswa = Mahasiswa::with('user')->findOrFail($mahasiswaId);
             
             // Get exercises for this student from this dosen
-            // Assuming exercises table has dosen_id and mahasiswa_id
-            $exercises = \App\Models\Exercise::where('dosen_id', $dosenId)
-                ->where('mahasiswa_id', $mahasiswaId)
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $query = \App\Models\Exercise::where('dosen_id', $dosenId)
+                ->where('mahasiswa_id', $mahasiswaId);
+
+            // Apply filter if present
+            if ($request->has('type') && in_array($request->type, ['assignment', 'quiz'])) {
+                $query->where('type', $request->type);
+            }
+
+            if ($request->has('status') && in_array($request->status, ['draft', 'published', 'completed'])) {
+                $query->where('status', $request->status);
+            }
+
+            $exercises = $query->orderBy('created_at', 'desc')->get();
                 
             // Pass data to the view
             return view('dosen.student_exercises', compact('dosen', 'mahasiswa', 'exercises'));
@@ -296,44 +304,84 @@ class DosenController extends Controller
         }
     }
 
-    public function removeMahasiswa($requestId)
+    public function removeMahasiswa($id)
     {
         try {
-            // Get the authenticated user
             $user = Auth::user();
-            
-            // Check if user has dosen role
-            if ($user->role !== User::ROLE_DOSEN) {
-                return redirect('/')->with('error', 'Access denied. You are not a dosen.');
-            }
-            
-            // Get the dosen record
             $dosen = $user->dosen;
             
-            // Check if dosen record exists
             if (!$dosen) {
-                return redirect('/')->with('error', 'Dosen record not found. Please contact administrator.');
+                // Try fallback logic similar to dashboard
+                $dosen = (object) ['id' => $user->id];
             }
             
-            // Find the request that belongs to this dosen
-            $request = DosenMahasiswaRequest::where('dosen_id', $dosen->id)
-                ->where('id', $requestId)
-                ->first();
+            // Find the request and verify it belongs to this dosen
+            $request = DosenMahasiswaRequest::where('id', $id)
+                ->where('dosen_id', $dosen->id)
+                ->firstOrFail();
                 
-            if (!$request) {
-                return redirect('/dosen/dashboard')->with('error', 'Request not found or you do not have permission to remove this student.');
-            }
-            
             // Delete the request
             $request->delete();
             
-            return redirect('/dosen/dashboard')->with('success', 'Student relationship removed successfully.');
+            return redirect()->route('dosen.dashboard')->with('success', 'Mahasiswa removed successfully.');
         } catch (\Exception $e) {
-            // Log the exception
-            Log::error('Error in DosenController@removeMahasiswa: ' . $e->getMessage());
+            Log::error('Error removing mahasiswa: ' . $e->getMessage());
+            return redirect()->route('dosen.dashboard')->with('error', 'Failed to remove mahasiswa.');
+        }
+    }
+
+    public function resendRequest($id)
+    {
+        try {
+            $user = Auth::user();
+            $dosen = $user->dosen;
             
-            // Redirect with error message
-            return redirect('/dosen/dashboard')->with('error', 'An error occurred while removing the student. Please try again later.');
+            if (!$dosen) {
+                $dosen = (object) ['id' => $user->id];
+            }
+            
+            $request = DosenMahasiswaRequest::where('id', $id)
+                ->where('dosen_id', $dosen->id)
+                ->whereIn('status', ['pending', 'rejected'])
+                ->firstOrFail();
+            
+            // Update created_at to trigger "fresh" notification logic
+            $request->touch();
+            
+            // If the status was rejected, reset it to pending
+            if ($request->status == 'rejected') {
+                $request->status = 'pending';
+                $request->save();
+            }
+            
+            return redirect()->route('dosen.dashboard')->with('success', 'Request resent successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error resending request notification: ' . $e->getMessage());
+            return redirect()->route('dosen.dashboard')->with('error', 'Failed to resend notification.');
+        }
+    }
+
+    public function cancelRequest($id)
+    {
+        try {
+            $user = Auth::user();
+            $dosen = $user->dosen;
+            
+            if (!$dosen) {
+                $dosen = (object) ['id' => $user->id];
+            }
+            
+            $request = DosenMahasiswaRequest::where('id', $id)
+                ->where('dosen_id', $dosen->id)
+                ->where('status', 'pending')
+                ->firstOrFail();
+            
+            $request->delete();
+            
+            return redirect()->route('dosen.dashboard')->with('success', 'Integration request cancelled successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error cancelling request: ' . $e->getMessage());
+            return redirect()->route('dosen.dashboard')->with('error', 'Failed to cancel request.');
         }
     }
 

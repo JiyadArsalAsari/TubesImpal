@@ -2,6 +2,12 @@
 
 @section('content')
     <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <button onclick="window.location.href='{{ route('mahasiswa.dashboard') }}'" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#485A48]/10 hover:bg-[#485A48] text-[#485A48] hover:text-white rounded-full transition-all duration-300 font-semibold group">
+                <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+                <span>Back to Dashboard</span>
+            </button>
+        </div>
         <!-- Back Button -->
         <button onclick="window.location.href='{{ route('mahasiswa.learning.recommendation') }}'" class="flex items-center gap-2 text-gray-300 hover:text-white mb-8 transition">
             <i class="fa-solid fa-arrow-left"></i>

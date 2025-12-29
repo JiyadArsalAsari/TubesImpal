@@ -31,6 +31,12 @@
 
         <div class="max-w-5xl mx-auto px-6 py-10">
             <div class="mb-6">
+                <button onclick="window.location.href='{{ route('mahasiswa.dashboard') }}'" class="flex items-center gap-2 text-white hover:text-gray-300 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </button>
+            </div>
+            <div class="mb-6">
                 <p class="text-sm text-gray-200">Quiz Review</p>
                 <h1 class="text-3xl font-bold">{{ $exercise->title }}</h1>
                 <p class="text-sm text-gray-200 mt-1">

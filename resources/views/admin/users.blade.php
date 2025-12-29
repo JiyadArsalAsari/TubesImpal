@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="mb-6">
+    <button onclick="window.location.href='{{ route('admin.dashboard') }}'" class="flex items-center gap-2 text-white hover:text-gray-300 transition-colors">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Dashboard</span>
+    </button>
+</div>
 <div class="space-y-6">
     <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold">User Management</h1>

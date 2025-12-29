@@ -666,11 +666,9 @@
     </form>
 
     <!-- Add Student Button -->
-    @if($requests->isNotEmpty())
-        <div class="add-student-btn" onclick="openAddStudentModal()">
-            <i class="fa-solid fa-plus"></i>
-        </div>
-    @endif
+    <div class="add-student-btn" onclick="openAddStudentModal()">
+        <i class="fa-solid fa-plus"></i>
+    </div>
 
     <!-- Add Student Modal -->
     <div id="addStudentModal" class="modal">

@@ -42,6 +42,16 @@
                 </div>
             </div>
         </header>
+        
+        <div class="max-w-6xl mx-auto px-6 py-8">
+            <div class="mb-6">
+                <button onclick="window.location.href='{{ route('dosen.dashboard') }}'" class="flex items-center gap-2 text-white hover:text-gray-300 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </button>
+            </div>
+        </div>
+        
         <div class="popup-overlay" id="popupOverlay" onclick="closeAllPopups()"></div>
         <div class="notification-popup" id="notificationPopup">
             <div class="mb-4">

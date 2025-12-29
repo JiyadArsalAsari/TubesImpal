@@ -35,6 +35,12 @@
         </header>
 
         <div class="max-w-4xl mx-auto px-6 py-12">
+            <div class="mb-6">
+                <button onclick="window.location.href='{{ route('mahasiswa.dashboard') }}'" class="flex items-center gap-2 text-white hover:text-gray-300 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </button>
+            </div>
             <div class="bg-[#2f3d2c] rounded-3xl shadow-xl p-8 border border-[#3c4c39]">
                 <div class="flex items-center justify-between mb-6">
                     <h1 class="text-2xl font-bold">Assignment Attempt</h1>

@@ -17,6 +17,12 @@
             user-select: none;
         }
     </style>
+    <div class="mb-6">
+        <button onclick="window.location.href='{{ route('mahasiswa.dashboard') }}'" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-500/30 hover:bg-gray-500/50 text-white hover:text-gray-200 rounded-full transition-all duration-300 font-semibold group">
+            <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+            <span>Back to Dashboard</span>
+        </button>
+    </div>
     <div class="min-h-screen w-full bg-[#44543D] bg-cover bg-center p-6 relative">
 
         <!-- Feedback Modal (Success/Error) -->

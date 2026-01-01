@@ -19,6 +19,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Share notifications with all views
+        view()->composer('*', function ($view) {
+            if (auth()->check()) {
+                $notifications = auth()->user()->notifications()->latest()->take(10)->get();
+                $unreadNotificationsCount = auth()->user()->unreadNotifications->count();
+                $view->with('notifications', $notifications)
+                     ->with('unreadNotificationsCount', $unreadNotificationsCount);
+            }
+        });
     }
 }

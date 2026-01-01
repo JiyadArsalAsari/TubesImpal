@@ -21,19 +21,10 @@ class LearningRecommendationDetailController extends Controller
             abort(404);
         }
 
-        // Load learning difficulties with eager loading
-        $user->load('mahasiswa.learningDifficulties');
-        $difficulties = $user->mahasiswa->learningDifficulties;
-
-        // Convert to array to access by index
-        $difficultiesArray = $difficulties->values();
-
-        // Check if difficulty exists
-        if (!isset($difficultiesArray[$id])) {
-            abort(404); // Return 404 if difficulty not found
-        }
-
-        $difficulty = $difficultiesArray[$id];
+        // Find difficulty by ID and ensure it belongs to the user
+        $difficulty = \App\Models\LearningDifficulty::where('id', $id)
+            ->where('mahasiswa_id', $user->mahasiswa->id)
+            ->firstOrFail();
 
         // Generate detailed recommendation using AI
         $detailedRecommendation = $gemini->generateRecommendation($difficulty->title, $difficulty->description);

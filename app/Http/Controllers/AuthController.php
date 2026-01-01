@@ -111,8 +111,8 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // Check if login is restricted to a specific role
-            if ($request->has('role') && $request->role && $user->role !== $request->role) {
+            // Check if login is restricted to a specific role (except for admins)
+            if ($request->has('role') && $request->role && $user->role !== $request->role && !$user->is_admin) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

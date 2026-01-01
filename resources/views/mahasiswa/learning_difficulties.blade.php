@@ -57,45 +57,70 @@
                 </div>
             </div>
 
-            <!-- Learning Difficulties List -->
-            @if($learningDifficulties->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($learningDifficulties as $difficulty)
-                        <div class="bg-[#1F2B1E] rounded-2xl p-6 shadow-lg border border-[#2D3A2D]">
-                            <div class="flex justify-between items-start mb-4">
-                                <h3 class="text-lg font-bold text-white">{{ $difficulty->title }}</h3>
-                                <span class="text-xs text-gray-400">{{ $difficulty->created_at->format('M d, Y') }}</span>
-                            </div>
-                            <p class="text-gray-300 mb-4">{{ $difficulty->description }}</p>
-                            <div class="flex justify-end">
-                                <button class="text-blue-400 hover:text-blue-300 text-sm font-medium">
-                                    View Details
-                                </button>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="bg-[#1F2B1E] rounded-2xl p-12 text-center border border-[#2D3A2D]">
-                    <div class="flex justify-center mb-6">
-                        <div class="bg-gray-800 rounded-full w-16 h-16 flex items-center justify-center">
-                            <i class="fa-solid fa-exclamation-circle text-white text-2xl"></i>
-                        </div>
-                    </div>
-                    <h3 class="text-white font-bold text-3xl mb-4">No Learning Difficulties Found</h3>
-                    <p class="text-gray-300 text-xl mb-8">You haven't submitted any learning difficulties yet.</p>
-                    <a href="{{ route('mahasiswa.learning.difficulties.create') }}"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full inline-flex items-center transition">
-                        <i class="fa-solid fa-plus mr-2"></i>
-                        Add Your First Difficulty
-                    </a>
-                </div>
-            @endif
+            <!-- Search Form -->
+            <div class="mb-8">
+                <form action="{{ route('mahasiswa.learning.difficulties') }}" method="GET" class="relative" id="searchForm">
+                    <input type="text" id="searchInput" name="search" placeholder="Search by subject..." value="{{ request('search') }}"
+                        class="w-full bg-[#1F2B1E] text-white border border-[#2D3A2D] rounded-full py-3 px-6 pl-12 focus:outline-none focus:border-blue-500 shadow-inner transition-all focus:ring-2 focus:ring-blue-500/50">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                </form>
+            </div>
+
+            <!-- Learning Difficulties List Container -->
+            <div id="learningDifficultiesList">
+                @include('mahasiswa.partials.learning_difficulties_list')
+            </div>
         </div>
     </div>
     <script>
+        // Live Search Implementation
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('learningDifficultiesList');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value;
+
+            // Debounce for 300ms
+            searchTimeout = setTimeout(() => {
+                fetchResults(query);
+            }, 300);
+        });
+
+        // Prevent form submission on enter (optional, as we want live search)
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetchResults(searchInput.value);
+        });
+
+        function fetchResults(query) {
+            // Use current URL but update search param
+            const url = new URL("{{ route('mahasiswa.learning.difficulties') }}");
+            if (query) {
+                url.searchParams.set('search', query);
+            } else {
+                url.searchParams.delete('search');
+            }
+
+            // Push state to URL without reloading so refresh works as expected
+            window.history.pushState({}, '', url);
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                resultsContainer.innerHTML = html;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
         // Show popup based on session messages
         window.onload = function () {
+
             @if(session('success'))
                 showFeedbackModal('success', 'Success!', "{{ session('success') }}");
             @endif

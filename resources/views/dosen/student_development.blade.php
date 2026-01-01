@@ -107,8 +107,8 @@
             <div class="max-w-5xl w-full">
                 <!-- Back Button -->
                 <div class="mb-6">
-                    <button onclick="window.location.href='{{ route('dosen.dashboard') }}'" class="flex items-center gap-2 text-white hover:text-gray-300 transition-colors">
-                        <i class="fa-solid fa-arrow-left"></i>
+                    <button onclick="window.location.href='{{ route('dosen.dashboard') }}'" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-500/30 hover:bg-gray-500/50 text-white hover:text-gray-200 rounded-full transition-all duration-300 font-semibold group">
+                        <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
                         <span>Back to Dashboard</span>
                     </button>
                 </div>

@@ -150,10 +150,9 @@
             z-index: 1000;
             min-width: 300px;
             max-width: 350px;
-            padding: 30px;
-            text-align: center;
+            padding: 20px;
         }
-        
+
         .notification-popup.show {
             display: block;
         }
@@ -170,10 +169,44 @@
     
     <!-- Notification Popup -->
     <div class="notification-popup" id="notificationPopup">
-        <div class="mb-4">
-            <i class="fa-regular fa-bell text-3xl text-gray-400 mb-3"></i>
-            <h3 class="font-bold text-xl mb-2">Notifications</h3>
-            <p class="text-gray-400">Notifications will be displayed here</p>
+        <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-2">
+            <h3 class="text-white font-bold text-lg text-left">Notifications</h3>
+            <form action="{{ route('mahasiswa.notifications.readAll') }}" method="POST">
+                @csrf
+                <button type="submit" class="text-xs text-gray-400 hover:text-white transition">Mark all read</button>
+            </form>
+        </div>
+        
+        <div class="space-y-3 max-h-80 overflow-y-auto text-left">
+            @if(isset($notifications) && count($notifications) > 0)
+                @foreach($notifications as $notification)
+                    <div class="bg-[#2a3b2a] p-3 rounded-lg border-l-4 {{ isset($notification->data['type']) && $notification->data['type'] == 'deadline' ? 'border-red-500' : 'border-blue-500' }} {{ $notification->read_at ? 'opacity-60' : '' }}">
+                        <div class="flex justify-between items-start">
+                            <h4 class="text-sm font-bold text-white">{{ $notification->data['title'] ?? 'Notification' }}</h4>
+                            @if(!$notification->read_at)
+                                <form action="{{ route('mahasiswa.notifications.read', $notification->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="text-xs text-green-400 hover:text-green-300 ml-2" title="Mark as read">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                        <p class="text-xs text-gray-300 mt-1">{{ $notification->data['message'] ?? '' }}</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-[10px] text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+                            <span class="text-[10px] uppercase font-bold {{ isset($notification->data['type']) && $notification->data['type'] == 'deadline' ? 'text-red-400' : 'text-blue-400' }}">
+                                {{ $notification->data['type'] ?? 'INFO' }}
+                            </span>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div class="text-center text-gray-400 text-sm py-4">
+                    <i class="fa-regular fa-bell-slash text-2xl mb-2 block"></i>
+                    No notifications yet
+                </div>
+            @endif
         </div>
     </div>
     
@@ -267,7 +300,9 @@
                 <!-- Notification Icon -->
                 <div class="relative cursor-pointer" id="bellIcon">
                     <i class="fa-regular fa-bell"></i>
-                    <span class="notification-badge">3</span>
+                    @if(isset($unreadNotificationsCount) && $unreadNotificationsCount > 0)
+                        <span class="notification-badge">{{ $unreadNotificationsCount }}</span>
+                    @endif
                 </div>
                 
                 <!-- Settings Icon -->

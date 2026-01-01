@@ -9,6 +9,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
+        /* Custom Scrollbar for Notifications */
+        .notification-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .notification-scroll::-webkit-scrollbar-track {
+            background: #1f2f1f; 
+            border-radius: 4px;
+        }
+        .notification-scroll::-webkit-scrollbar-thumb {
+            background: #4b5b3b; 
+            border-radius: 4px;
+        }
+        .notification-scroll::-webkit-scrollbar-thumb:hover {
+            background: #5c704a; 
+        }
+
         /* Profile Popup Styles */
         .profile-popup {
             display: none;
@@ -97,8 +113,7 @@
             z-index: 1000;
             min-width: 300px;
             max-width: 350px;
-            padding: 30px;
-            text-align: center;
+            padding: 20px;
         }
 
         .notification-popup.show {
@@ -124,23 +139,28 @@
         .btn-accept {
             background-color: #48bb78;
             color: white;
-            padding: 8px 12px;
+            padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 0.8rem;
         }
 
         .btn-reject {
             background-color: #f56565;
             color: white;
-            padding: 8px 12px;
+            padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 0.8rem;
         }
 
         .logo-container {
             cursor: pointer;
         }
     </style>
+    
+    <script>
+    </script>
 </head>
 
 <body class="bg-[#4b5b3b] text-white font-sans relative overflow-x-hidden">
@@ -153,16 +173,7 @@
     <!-- Popup Overlay -->
     <div class="popup-overlay" id="popupOverlay" onclick="closeAllPopups()"></div>
 
-    <!-- Notification Popup -->
-    <div class="notification-popup" id="notificationPopup">
-        <div class="mb-4">
-            <i class="fa-regular fa-bell text-3xl text-gray-400 mb-3"></i>
-            <h3 class="font-bold text-xl mb-2">Notifications</h3>
-            <div id="notificationContent">
-                <p class="text-gray-400">Notifications will be displayed here</p>
-            </div>
-        </div>
-    </div>
+    
 
     <!-- Profile Popup -->
     <div class="profile-popup" id="profilePopup">
@@ -261,8 +272,8 @@
 
     <div class="relative z-10 min-h-screen flex flex-col">
         <!-- HEADER -->
-        <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
-            <div class="flex items-center gap-3">
+    <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4 relative z-[1001]">
+        <div class="flex items-center gap-3">
                 @if(Auth::user() && Auth::user()->profile_picture)
                     <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_picture) }}" alt="Profile"
                         class="rounded-full w-10 h-10 object-cover">
@@ -281,11 +292,131 @@
                 <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
             </div>
             <div class="flex gap-6 text-3xl relative">
-                <div class="relative cursor-pointer" id="bellIcon">
+                <!-- Notification Icon -->
+                <div class="relative cursor-pointer" id="bellIcon" onclick="toggleNotificationPopup()">
                     <i class="fa-regular fa-bell"></i>
-                    <span class="notification-badge">3</span>
+                    @if(isset($unreadNotificationsCount) && $unreadNotificationsCount > 0)
+                        <span class="notification-badge">{{ $unreadNotificationsCount }}</span>
+                    @endif
                 </div>
-                <div class="cursor-pointer" id="gearIcon">
+                
+                <!-- Notification Popup -->
+                <div class="notification-popup" id="notificationPopup" style="pointer-events: auto;">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-2">
+                        <h3 class="text-white font-bold text-lg text-left">Notifications</h3>
+                        <button type="button" onclick="markAllNotificationsAsRead()" class="text-xs text-gray-400 hover:text-white transition">Mark all read</button>
+                    </div>
+                    
+                    <form id="markAllReadForm" action="{{ route('mahasiswa.notifications.readAll') }}" method="POST" class="hidden">
+                        @csrf
+                    </form>
+                    
+                    <div class="space-y-3 max-h-80 overflow-y-auto text-left notification-scroll overscroll-contain">
+                        @if(isset($notifications) && count($notifications) > 0)
+                            @foreach($notifications as $notification)
+                                @php
+                                    $type = $notification->data['type'] ?? 'info';
+                                    $isDeadline = $type === 'deadline';
+                                    $isSchedule = $type === 'schedule';
+                                    $isDosenRequest = $type === 'dosen_request';
+                                    
+                                    $subject = $notification->data['subject'] ?? $notification->data['title'] ?? '';
+                                    $message = $notification->data['message'] ?? '';
+                                    $time = $notification->data['time'] ?? '';
+                                    $date = $notification->data['date'] ?? '';
+                                    
+                                    $badgeClass = 'text-blue-400';
+                                    $borderClass = 'border-blue-500';
+                                    
+                                    if ($isDeadline) {
+                                        $badgeClass = 'text-red-400';
+                                        $borderClass = 'border-red-500';
+                                    } elseif ($isDosenRequest) {
+                                        $badgeClass = 'text-yellow-400';
+                                        $borderClass = 'border-yellow-500';
+                                    }
+                                    
+                                    // Determine click URL
+                                    $targetUrl = '';
+                                    if ($isDeadline) {
+                                        $targetUrl = route('mahasiswa.deadline');
+                                    } elseif ($isSchedule) {
+                                        $targetUrl = route('mahasiswa.schedule');
+                                    }
+                                    
+                                    $cursorClass = $targetUrl ? 'cursor-pointer' : 'cursor-default';
+                                @endphp
+                                <div class="bg-[#2a3b2a] p-3 rounded-lg border-l-4 {{ $borderClass }} {{ $notification->read_at ? 'opacity-60' : '' }} hover:bg-[#344634] transition {{ $cursorClass }} relative"
+                                     data-read-url="{{ route('mahasiswa.notifications.read', $notification->id) }}"
+                                     data-id="{{ $notification->id }}"
+                                     onclick="handleNotificationClick(event, '{{ $targetUrl }}')">
+                                    
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-center gap-3 w-full">
+                                            @if($isDeadline)
+                                                <i class="fa-solid fa-clock text-red-400"></i>
+                                            @elseif($isSchedule)
+                                                <i class="fa-regular fa-calendar text-blue-400"></i>
+                                            @elseif($isDosenRequest)
+                                                <i class="fa-solid fa-user-plus text-yellow-400"></i>
+                                            @else
+                                                <i class="fa-solid fa-bell text-gray-400"></i>
+                                            @endif
+                                            
+                                            <div class="w-full">
+                                                <div class="text-sm font-bold text-white">{{ $subject }}</div>
+                                                <div class="text-xs text-gray-300">
+                                                    @if($isSchedule && $date)
+                                                        {{ $date }} • {{ $time }}
+                                                    @elseif($isDeadline && $date)
+                                                        {{ \Carbon\Carbon::parse($date)->isToday() ? 'Hari ini' : (\Carbon\Carbon::parse($date)->isTomorrow() ? 'Besok' : $date) }} • {{ $time }}
+                                                    @elseif($isDosenRequest)
+                                                        {{ $message }}
+                                                        <div class="request-actions mt-2" onclick="event.stopPropagation()">
+                                                            <button class="btn-accept px-3 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded-full mr-2 transition" onclick="handleDosenRequest({{ $notification->data['request_id'] }}, 'accept')">Accept</button>
+                                                            <button class="btn-reject px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded-full transition" onclick="handleDosenRequest({{ $notification->data['request_id'] }}, 'reject')">Reject</button>
+                                                        </div>
+                                                    @else
+                                                        {{ $message }}
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        @if(!$isDosenRequest)
+                                        <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                                            <span class="text-[10px] uppercase font-bold {{ $badgeClass }}">{{ strtoupper(str_replace('_', ' ', $type)) }}</span>
+                                            @if(!$notification->read_at)
+                                                <button type="button" class="p-2 -mr-2 text-green-400 hover:text-green-300 hover:bg-white/10 rounded-full transition-colors z-20 relative"
+                                                    onclick="markNotificationButtonClick(event, this)"
+                                                    title="Tandai sudah dibaca">
+                                                    <i class="fa-solid fa-check text-sm"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mt-2">
+                                        <span class="text-[10px] text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+                                        <span class="text-[10px] text-gray-400">
+                                            @if($isSchedule && isset($notification->data['room']))
+                                                Room: {{ $notification->data['room'] }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-center text-gray-400 text-sm py-4">
+                                <i class="fa-regular fa-bell-slash text-2xl mb-2 block"></i>
+                                Belum ada notifikasi
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="cursor-pointer" id="gearIcon" onclick="toggleProfilePopup()">
                     <i class="fa-solid fa-gear"></i>
                 </div>
             </div>
@@ -504,18 +635,13 @@
     <script>
         // Add event listeners after DOM is loaded
         document.addEventListener('DOMContentLoaded', function () {
-            // Add click event to bell icon
-            document.getElementById('bellIcon').addEventListener('click', function (e) {
-                e.stopPropagation();
-                toggleNotificationPopup();
-                loadDosenRequests();
-            });
-
-            // Add click event to gear icon
-            document.getElementById('gearIcon').addEventListener('click', function (e) {
-                e.stopPropagation();
-                toggleProfilePopup();
-            });
+            const markAllForm = document.getElementById('markAllReadForm');
+            if (markAllForm) {
+                markAllForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    await markAllNotificationsAsRead();
+                });
+            }
         });
 
         // Schedule Modal Functions
@@ -616,86 +742,6 @@
 
             popup.classList.toggle('show');
             overlay.classList.toggle('show');
-        }
-
-        // Load dosen requests
-        function loadDosenRequests() {
-            fetch('{{ route('mahasiswa.dosen.requests') }}')
-                .then(response => response.json())
-                .then(requests => {
-                    const contentDiv = document.getElementById('notificationContent');
-
-                    if (requests.length > 0) {
-                        let html = '';
-                        requests.forEach(request => {
-                            html += `
-                                <div class="request-notification">
-                                    <div>
-                                        <strong>${request.dosen.user.name}</strong> wants to connect with you
-                                    </div>
-                                    <div class="request-actions">
-                                        <button class="btn-accept" onclick="acceptRequest(${request.id})">Accept</button>
-                                        <button class="btn-reject" onclick="rejectRequest(${request.id})">Reject</button>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        contentDiv.innerHTML = html;
-                    } else {
-                        contentDiv.innerHTML = '<p class="text-gray-400">No pending requests</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading requests:', error);
-                });
-        }
-
-        // Accept dosen request
-        function acceptRequest(id) {
-            fetch(`/mahasiswa/dosen-requests/${id}/accept`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showFeedbackModal('success', 'Success', 'Request accepted successfully!');
-                        loadDosenRequests();
-                    } else {
-                        showFeedbackModal('error', 'Failed', 'Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error accepting request:', error);
-                    showFeedbackModal('error', 'Error', 'An error occurred while accepting the request.');
-                });
-        }
-
-        // Reject dosen request
-        function rejectRequest(id) {
-            fetch(`/mahasiswa/dosen-requests/${id}/reject`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showFeedbackModal('success', 'Success', 'Request rejected successfully!');
-                        loadDosenRequests();
-                    } else {
-                        showFeedbackModal('error', 'Failed', 'Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error rejecting request:', error);
-                    showFeedbackModal('error', 'Error', 'An error occurred while rejecting the request.');
-                });
         }
 
         // Timer Variables
@@ -800,20 +846,138 @@
             languageMenu.classList.toggle('show');
         }
 
-        // Close popup when clicking outside
-        document.addEventListener('click', function (event) {
-            const notificationPopup = document.getElementById('notificationPopup');
-            const bellIcon = document.getElementById('bellIcon');
-            const gearIcon = document.getElementById('gearIcon');
+        // Show popup based on session messages
+        window.onload = function() {
+            @if(session('success'))
+                showFeedbackModal('success', 'Success!', "{{ session('success') }}");
+            @endif
+            
+            @if(session('error'))
+                showFeedbackModal('error', 'Error!', "{{ session('error') }}");
+            @endif
 
-            if (!profilePopup.contains(event.target) &&
-                !notificationPopup.contains(event.target) &&
-                !bellIcon.contains(event.target) &&
-                !gearIcon.contains(event.target) &&
-                (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) {
-                closeAllPopups();
+            @if($errors->any())
+                let errorMessages = "";
+                @foreach ($errors->all() as $error)
+                    errorMessages += "{{ $error }}\n";
+                @endforeach
+                showFeedbackModal('error', 'Error!', errorMessages);
+            @endif
+        }
+
+        function markNotificationButtonClick(event, btnEl) {
+            if(event) event.stopPropagation();
+            const item = btnEl.closest('[data-read-url]');
+            if (!item) return;
+            const url = item.getAttribute('data-read-url');
+            markNotificationAsRead(url, btnEl);
+        }
+
+        async function markNotificationAsRead(url, btnEl) {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                if (res.ok) {
+                    const item = btnEl.closest('.bg-[#2a3b2a]');
+                    if (item) item.classList.add('opacity-60');
+                    btnEl.remove();
+                    const badge = document.querySelector('#bellIcon .notification-badge');
+                    if (badge) {
+                        const n = parseInt(badge.textContent || '0', 10);
+                        const next = Math.max(0, n - 1);
+                        badge.textContent = next;
+                        if (next === 0) badge.remove();
+                    }
+                    showFeedbackModal('success', 'Success!', 'Notifikasi ditandai sudah dibaca');
+                } else {
+                    // Fallback: submit a hidden form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = url;
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = token;
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            } catch (e) {}
+        }
+
+        async function markAllNotificationsAsRead() {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            try {
+                const res = await fetch(`{{ url('/mahasiswa/notifications/read-all') }}`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                if (res.ok) {
+                    document.querySelectorAll('.notification-popup .bg-[#2a3b2a]').forEach(el => el.classList.add('opacity-60'));
+                    document.querySelectorAll('.notification-popup button.text-green-400').forEach(el => el.remove());
+                    const badge = document.querySelector('#bellIcon .notification-badge');
+                    if (badge) badge.remove();
+                    showFeedbackModal('success', 'Success!', 'Semua notifikasi ditandai sudah dibaca');
+                } else {
+                    // Fallback: submit the original form
+                    const form = document.getElementById('markAllReadForm');
+                    if (form) form.submit();
+                }
+            } catch (e) {}
+        }
+
+        async function handleDosenRequest(requestId, action) {
+            // Stop propagation is handled in HTML, but good to be safe if called programmatically
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const url = action === 'accept' 
+                ? `{{ url('/mahasiswa/dosen-requests') }}/${requestId}/accept`
+                : `{{ url('/mahasiswa/dosen-requests') }}/${requestId}/reject`;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (res.ok) {
+                    showFeedbackModal('success', 'Success!', `Request ${action}ed successfully`);
+                    // Reload after 1.5s to update UI
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showFeedbackModal('error', 'Error!', 'Failed to process request');
+                }
+            } catch (e) {
+                console.error(e);
+                showFeedbackModal('error', 'Error!', 'Something went wrong');
             }
-        });
+        }
+
+        function handleNotificationClick(event, url) {
+            // Ignore if clicking on buttons or their children
+            if (event.target.closest('button') || event.target.closest('a') || event.target.closest('.request-actions')) {
+                return;
+            }
+            if (url && url.trim() !== '') {
+                window.location.href = url;
+            }
+        }
     </script>
 </body>
 

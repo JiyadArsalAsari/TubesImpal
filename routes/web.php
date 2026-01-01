@@ -13,7 +13,6 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\DeadlineController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\AcademicPeriodController;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,6 +112,14 @@ Route::get('/mahasiswa/learning-recommendation/{id}',
     [LearningRecommendationDetailController::class, 'show'])
     ->middleware('auth')
     ->name('mahasiswa.learning.recommendation.detail');
+
+// Notification Routes
+Route::post('/mahasiswa/notifications/{id}/read', [MahasiswaController::class, 'markNotificationAsRead'])
+    ->middleware('auth')
+    ->name('mahasiswa.notifications.read');
+Route::post('/mahasiswa/notifications/read-all', [MahasiswaController::class, 'markAllNotificationsAsRead'])
+    ->middleware('auth')
+    ->name('mahasiswa.notifications.readAll');
 
 // Learning Development Route
 Route::get('/mahasiswa/learning-development', [LearningDevelopmentController::class, 'index'])
@@ -250,13 +257,4 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/users/{id}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
     Route::put('/admin/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
-
-    // Academic Period Routes
-    Route::get('/admin/periods', [AcademicPeriodController::class, 'index'])->name('admin.periods.index');
-    Route::get('/admin/periods/create', [AcademicPeriodController::class, 'create'])->name('admin.periods.create');
-    Route::post('/admin/periods', [AcademicPeriodController::class, 'store'])->name('admin.periods.store');
-    Route::get('/admin/periods/{id}/edit', [AcademicPeriodController::class, 'edit'])->name('admin.periods.edit');
-    Route::put('/admin/periods/{id}', [AcademicPeriodController::class, 'update'])->name('admin.periods.update');
-    Route::delete('/admin/periods/{id}', [AcademicPeriodController::class, 'destroy'])->name('admin.periods.destroy');
-    Route::post('/admin/periods/{id}/activate', [AcademicPeriodController::class, 'activate'])->name('admin.periods.activate');
 });

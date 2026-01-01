@@ -9,7 +9,7 @@ use App\Models\Mahasiswa;
 
 class LearningDifficultyController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Ensure only mahasiswa can access this
         if (Auth::user()->role !== 'mahasiswa') {
@@ -24,9 +24,21 @@ class LearningDifficultyController extends Controller
             // If mahasiswa doesn't exist, create an empty collection
             $learningDifficulties = collect();
         } else {
-            // Load learning difficulties with the mahasiswa using eager loading
-            $user->load('mahasiswa.learningDifficulties');
-            $learningDifficulties = $user->mahasiswa->learningDifficulties;
+            // Query builder for learning difficulties
+            $query = $user->mahasiswa->learningDifficulties();
+
+            // Apply search filter if present
+            if ($request->has('search')) {
+                $search = $request->input('search');
+                $query->where('title', 'like', "%{$search}%");
+            }
+
+            // Get the results
+            $learningDifficulties = $query->get();
+        }
+
+        if ($request->ajax()) {
+            return view('mahasiswa.partials.learning_difficulties_list', compact('learningDifficulties'))->render();
         }
 
         return view('mahasiswa.learning_difficulties', compact('learningDifficulties'));

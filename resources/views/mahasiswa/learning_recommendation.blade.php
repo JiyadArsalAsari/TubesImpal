@@ -20,55 +20,65 @@
             <p class="text-gray-300 text-lg">Personalized recommendations based on your learning difficulties</p>
         </div>
 
+        <!-- Search Form -->
+        <div class="mb-8">
+            <form action="{{ route('mahasiswa.learning.recommendation') }}" method="GET" class="relative" id="searchForm">
+                <input type="text" id="searchInput" name="search" placeholder="Search by subject..." value="{{ request('search') }}"
+                    class="w-full bg-[#1F2B1E] text-white border border-[#2D3A2D] rounded-full py-3 px-6 pl-12 focus:outline-none focus:border-blue-500 shadow-inner transition-all focus:ring-2 focus:ring-blue-500/50">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            </form>
+        </div>
+
         <!-- Recommendations List -->
-        @if(isset($recommendations) && count($recommendations) > 0)
-            <div class="space-y-6">
-                @foreach($recommendations as $recommendation)
-                    <div class="bg-[#1F2B1E] rounded-2xl p-6 shadow-lg border border-[#2D3A2D]">
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 mt-1">
-                                <div class="bg-blue-500 rounded-lg w-12 h-12 flex items-center justify-center">
-                                    <i class="fa-solid fa-robot text-white text-xl"></i>
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <h3 class="text-xl font-bold text-white mb-2">
-                                    {{ $recommendation['subject'] ?? 'Recommended Learning Path' }}
-                                </h3>
-                                <div class="prose prose-invert max-w-none">
-                                    <p class="text-gray-300 whitespace-pre-line">
-                                        {{ $recommendation['ai_result'] ?? 'No recommendation available.' }}
-                                    </p>
-                                </div>
-                                <div class="mt-4">
-                                    <a href="{{ route('mahasiswa.learning.recommendation.detail', $loop->index) }}" 
-                                       class="inline-flex items-center text-blue-400 hover:text-blue-300 font-medium">
-                                        View Detailed Plan
-                                        <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <!-- Empty State -->
-            <div class="bg-[#1F2B1E] rounded-2xl p-12 text-center border border-[#2D3A2D]">
-                <div class="flex justify-center mb-6">
-                    <div class="bg-gray-800 rounded-full w-16 h-16 flex items-center justify-center">
-                        <i class="fa-solid fa-robot text-white text-2xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-white font-bold text-3xl mb-4">No Recommendations Yet</h3>
-                <p class="text-gray-300 text-xl mb-8">Submit your learning difficulties to get personalized recommendations.</p>
-                <a href="{{ route('mahasiswa.learning.difficulties.create') }}" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full inline-flex items-center transition">
-                    <i class="fa-solid fa-plus mr-2"></i>
-                    Report Learning Difficulty
-                </a>
-            </div>
-        @endif
+        <div id="learningRecommendationsList">
+            @include('mahasiswa.partials.learning_recommendations_list')
+        </div>
     </div>
 </div>
+<script>
+    // Live Search Implementation
+    const searchInput = document.getElementById('searchInput');
+    const resultsContainer = document.getElementById('learningRecommendationsList');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value;
+
+        // Debounce for 300ms
+        searchTimeout = setTimeout(() => {
+            fetchResults(query);
+        }, 300);
+    });
+
+    // Prevent form submission on enter
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetchResults(searchInput.value);
+    });
+
+    function fetchResults(query) {
+        // Use current URL but update search param
+        const url = new URL("{{ route('mahasiswa.learning.recommendation') }}");
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+
+        // Push state to URL without reloading
+        window.history.pushState({}, '', url);
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            resultsContainer.innerHTML = html;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
 @endsection

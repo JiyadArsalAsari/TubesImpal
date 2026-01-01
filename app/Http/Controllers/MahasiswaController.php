@@ -60,8 +60,31 @@ class MahasiswaController extends Controller
             ];
         });
 
+        // Get notifications
+        $notifications = Auth::user()->notifications()->latest()->take(10)->get();
+        $unreadNotificationsCount = Auth::user()->unreadNotifications->count();
+
         // Return the dashboard view
-        return view('mahasiswa.dashboard', compact('mahasiswa', 'todaysSchedule', 'allTodaysSchedules', 'todaysDeadline', 'allDeadlines'));
+        return view('mahasiswa.dashboard', compact('mahasiswa', 'todaysSchedule', 'allTodaysSchedules', 'todaysDeadline', 'allDeadlines', 'notifications', 'unreadNotificationsCount'));
+    }
+
+    public function markNotificationAsRead($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back();
+    }
+
+    public function markAllNotificationsAsRead()
+    {
+        Auth::user()->unreadNotifications->markAsRead();
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back();
     }
 
     public function content()
@@ -115,6 +138,14 @@ class MahasiswaController extends Controller
             'status' => 'accepted'
         ]);
         
+        // Mark related notification as read
+        Auth::user()->notifications()
+            ->where('data->request_id', $id)
+            ->get()
+            ->each(function($n) {
+                $n->markAsRead();
+            });
+        
         return response()->json(['success' => true, 'message' => 'Request accepted successfully']);
     }
     
@@ -137,6 +168,14 @@ class MahasiswaController extends Controller
         $dosenRequest->update([
             'status' => 'rejected'
         ]);
+        
+        // Mark related notification as read
+        Auth::user()->notifications()
+            ->where('data->request_id', $id)
+            ->get()
+            ->each(function($n) {
+                $n->markAsRead();
+            });
         
         return response()->json(['success' => true, 'message' => 'Request rejected successfully']);
     }

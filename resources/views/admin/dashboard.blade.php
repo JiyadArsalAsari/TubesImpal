@@ -11,9 +11,6 @@
     <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold">Admin Dashboard <span class="ml-2 px-2 py-1 text-xs rounded bg-red-600">Administrator</span></h1>
         <div class="flex gap-2">
-            <a href="{{ route('admin.periods.index') }}" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition">
-                Manage Periods
-            </a>
             <a href="{{ route('admin.users') }}" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
                 Manage Users
             </a>

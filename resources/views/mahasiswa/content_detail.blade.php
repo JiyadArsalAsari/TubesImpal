@@ -2,12 +2,6 @@
 
 @section('content')
     <div class="max-w-4xl mx-auto">
-        <div class="mb-6">
-            <button onclick="window.location.href='{{ route('mahasiswa.dashboard') }}'" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#485A48]/10 hover:bg-[#485A48] text-[#485A48] hover:text-white rounded-full transition-all duration-300 font-semibold group">
-                <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
-                <span>Back to Dashboard</span>
-            </button>
-        </div>
         <!-- Back Button -->
         <button onclick="window.location.href='{{ route('mahasiswa.learning.recommendation') }}'" class="flex items-center gap-2 text-gray-300 hover:text-white mb-8 transition">
             <i class="fa-solid fa-arrow-left"></i>
@@ -42,22 +36,8 @@
             <div class="border-t border-gray-700 my-8"></div>
 
             <!-- Content Details -->
-            <div class="prose prose-invert max-w-none">
-                <p class="text-gray-200 text-lg leading-relaxed">
-                    {{ $content['details'] }}
-                </p>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-4 mt-10">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full inline-flex items-center transition">
-                    <i class="fa-solid fa-bookmark mr-2"></i>
-                    Simpan ke Daftar Belajar
-                </button>
-                <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full inline-flex items-center transition">
-                    <i class="fa-solid fa-share-nodes mr-2"></i>
-                    Bagikan
-                </button>
+            <div class="prose prose-invert max-w-none text-gray-200 text-lg leading-relaxed">
+                {!! Str::markdown($content['details']) !!}
             </div>
         </div>
     </div>

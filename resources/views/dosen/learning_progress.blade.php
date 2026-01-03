@@ -132,29 +132,7 @@
                     </div>
                 </div>
 
-                <div class="bg-[#395035] rounded-2xl p-6 shadow-lg border border-[#436040]">
-                    <div class="flex items-center">
-                        <div class="rounded-full bg-[#2f3d2c] p-3 mr-4 border border-[#436040]">
-                            <i class="fas fa-check-circle text-green-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <p class="text-gray-300 text-sm">Resolved Difficulties</p>
-                            <p class="text-2xl font-bold text-white">{{ $mahasiswa->learningDifficulties->where('status', 'resolved')->count() }}</p>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="bg-[#395035] rounded-2xl p-6 shadow-lg border border-[#436040]">
-                    <div class="flex items-center">
-                        <div class="rounded-full bg-[#2f3d2c] p-3 mr-4 border border-[#436040]">
-                            <i class="fas fa-clock text-yellow-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <p class="text-gray-300 text-sm">Pending Difficulties</p>
-                            <p class="text-2xl font-bold text-white">{{ $mahasiswa->learningDifficulties->where('status', '!=', 'resolved')->count() }}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Learning Difficulties Section -->
@@ -170,7 +148,7 @@
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Subject</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Description</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date Reported</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">AI Recommendation</th>
                                     </tr>
@@ -184,17 +162,7 @@
                                         <td class="px-6 py-4 text-sm text-gray-300">
                                             {{ Str::limit($item['difficulty']->description, 80) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if(($item['difficulty']->status ?? null) === 'resolved')
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-900 text-green-200 border border-green-700">
-                                                    Resolved
-                                                </span>
-                                            @else
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-200 border border-yellow-700">
-                                                    Pending
-                                                </span>
-                                            @endif
-                                        </td>
+
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                                             {{ optional($item['difficulty']->created_at)->format('M d, Y') ?? '-' }}
                                         </td>

@@ -13,7 +13,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#1A3C2B', // Hijau Tua
+                        primary: '#1f2f1f', // Matching Dashboard Header
                         secondary: '#F2F2EB', // Krem Lembut
                         accent: '#4C8456', // Hijau Lebih Terang
                         surface: '#FFFFFF',

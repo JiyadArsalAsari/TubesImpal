@@ -34,10 +34,24 @@ class LearningRecommendationController extends Controller
         $recommendations = [];
 
         foreach ($difficulties as $difficulty) {
+            // Cek apakah rekomendasi sudah ada di database
+            if (empty($difficulty->recommendation)) {
+                // Jika belum ada, generate dari AI dan simpan
+                $aiResult = $gemini->generateRecommendation($difficulty->title, $difficulty->description);
+                
+                // Hanya simpan jika tidak error
+                if (!str_starts_with($aiResult, 'ERROR') && !str_starts_with($aiResult, '⚠️')) {
+                    $difficulty->recommendation = $aiResult;
+                    $difficulty->save();
+                }
+            } else {
+                $aiResult = $difficulty->recommendation;
+            }
+
             $recommendations[] = [
                 'id' => $difficulty->id,
                 'subject' => $difficulty->title,
-                'ai_result' => $gemini->generateRecommendation($difficulty->title, $difficulty->description),
+                'ai_result' => $aiResult,
             ];
         }
 

@@ -26,8 +26,19 @@ class LearningRecommendationDetailController extends Controller
             ->where('mahasiswa_id', $user->mahasiswa->id)
             ->firstOrFail();
 
-        // Generate detailed recommendation using AI
-        $detailedRecommendation = $gemini->generateRecommendation($difficulty->title, $difficulty->description);
+        // Check if recommendation exists in DB, otherwise generate and save
+        if (!empty($difficulty->recommendation)) {
+            $detailedRecommendation = $difficulty->recommendation;
+        } else {
+            // Generate detailed recommendation using AI
+            $detailedRecommendation = $gemini->generateRecommendation($difficulty->title, $difficulty->description);
+            
+            // Save if valid
+            if (!str_starts_with($detailedRecommendation, 'ERROR') && !str_starts_with($detailedRecommendation, '⚠️')) {
+                $difficulty->recommendation = $detailedRecommendation;
+                $difficulty->save();
+            }
+        }
 
         // Prepare content data
         $content = [

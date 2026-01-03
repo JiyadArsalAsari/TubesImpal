@@ -220,8 +220,7 @@ class DosenController extends Controller
                 
             // Calculate learning statistics
             $totalDifficulties = $mahasiswa->learningDifficulties->count();
-            $resolvedDifficulties = $mahasiswa->learningDifficulties->where('status', 'resolved')->count();
-            $pendingDifficulties = $totalDifficulties - $resolvedDifficulties;
+
             
             $totalDeadlines = $mahasiswa->deadlines->count();
             $completedDeadlines = $mahasiswa->deadlines->where('status', 'completed')->count();
@@ -232,9 +231,7 @@ class DosenController extends Controller
                 'dosen', 
                 'mahasiswa', 
                 'learningRecommendations',
-                'totalDifficulties', 
-                'resolvedDifficulties', 
-                'pendingDifficulties',
+                'totalDifficulties',
                 'totalDeadlines',
                 'completedDeadlines',
                 'pendingDeadlines'

@@ -53,12 +53,8 @@
 
                 <div class="w-full max-w-2xl relative mb-12">
                     <input type="text" name="subject_name"
-                        class="w-full py-4 pl-6 pr-16 rounded-full bg-white shadow-lg outline-none relative z-10 text-gray-800 text-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full py-4 pl-6 pr-6 rounded-full bg-white shadow-lg outline-none relative z-10 text-gray-800 text-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Type subject name here..." required />
-
-                    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-700 z-20">
-                        <i class="fa-solid fa-microphone text-xl"></i>
-                    </button>
                 </div>
 
                 <!-- Difficulty Question -->
@@ -66,18 +62,8 @@
 
                 <div class="w-full max-w-3xl relative mb-12">
                     <textarea name="description"
-                        class="w-full h-48 p-6 pr-16 rounded-3xl bg-white shadow-lg resize-none outline-none relative z-10 text-gray-800 text-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full h-48 p-6 pr-6 rounded-3xl bg-white shadow-lg resize-none outline-none relative z-10 text-gray-800 text-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Describe what makes this subject difficult for you..." required></textarea>
-
-                    <!-- Attachment Icon -->
-                    <button type="button" class="absolute left-5 bottom-4 text-gray-700 z-20">
-                        <i class="fa-solid fa-file-circle-plus text-2xl"></i>
-                    </button>
-
-                    <!-- Mic Icon -->
-                    <button type="button" class="absolute right-6 bottom-4 text-gray-700 z-20">
-                        <i class="fa-solid fa-microphone text-2xl"></i>
-                    </button>
                 </div>
 
                 <!-- Submit Button -->

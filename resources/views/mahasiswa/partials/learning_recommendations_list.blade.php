@@ -8,20 +8,25 @@
                             <i class="fa-solid fa-robot text-white text-xl"></i>
                         </div>
                     </div>
-                    <div class="flex-1">
-                        <h3 class="text-xl font-bold text-white mb-2">
-                            {{ $recommendation['subject'] ?? 'Recommended Learning Path' }}
-                        </h3>
-                        <div class="prose prose-invert max-w-none">
-                            <p class="text-gray-300 whitespace-pre-line">
-                                {{ $recommendation['ai_result'] ?? 'No recommendation available.' }}
-                            </p>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-xl font-bold text-white mb-2 truncate pr-4">
+                                {{ $recommendation['subject'] ?? 'Recommended Learning Path' }}
+                            </h3>
+                            <span class="bg-blue-900/50 text-blue-200 text-xs px-2 py-1 rounded border border-blue-800 whitespace-nowrap">
+                                AI Generated
+                            </span>
                         </div>
-                        <div class="mt-4">
+                        
+                        <div class="prose prose-invert prose-sm max-w-none text-gray-300 mb-4 prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline prose-p:leading-relaxed prose-headings:text-gray-100 prose-headings:font-semibold prose-strong:text-white">
+                            {!! Str::markdown($recommendation['ai_result'] ?? 'No recommendation available.') !!}
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-[#2D3A2D] flex justify-end">
                             <a href="{{ route('mahasiswa.learning.recommendation.detail', $recommendation['id']) }}" 
-                               class="inline-flex items-center text-blue-400 hover:text-blue-300 font-medium">
-                                View Detailed Plan
-                                <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
+                               class="inline-flex items-center gap-2 px-4 py-2 bg-[#2D3A2D] hover:bg-[#394a39] text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                <span>Lihat Detail </span>
+                                <i class="fa-solid fa-arrow-right"></i>
                             </a>
                         </div>
                     </div>

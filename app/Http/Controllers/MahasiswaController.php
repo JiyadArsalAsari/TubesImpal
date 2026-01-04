@@ -13,6 +13,7 @@ use App\Models\QuizAttempt;
 use App\Models\AssignmentSubmission;
 use App\Models\ExerciseResult;
 use App\Models\Mahasiswa;
+use App\Notifications\RequestResponseNotification;
 
 class MahasiswaController extends Controller
 {
@@ -25,10 +26,10 @@ class MahasiswaController extends Controller
 
         // Get the authenticated mahasiswa data
         $mahasiswa = Auth::user()->mahasiswa;
-        
+
         // Get today's schedule with proper timezone
         $today = Carbon::now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->format('l'); // Get day name (Monday, Tuesday, etc.)
-        
+
         // Check with multiple formats to ensure compatibility
         $todaysSchedule = $mahasiswa->schedules()
             ->where('day', $today)
@@ -36,7 +37,7 @@ class MahasiswaController extends Controller
             ->orWhere('day', ucfirst(strtolower($today)))
             ->orderBy('time')
             ->first();
-        
+
         // Get all schedules for today
         $allTodaysSchedules = $mahasiswa->schedules()
             ->where('day', $today)
@@ -44,14 +45,14 @@ class MahasiswaController extends Controller
             ->orWhere('day', ucfirst(strtolower($today)))
             ->orderBy('time')
             ->get();
-        
+
         // Get today's deadline
         $todayDate = Carbon::now()->setTimezone(config('app.timezone', 'Asia/Jakarta'))->toDateString();
         $todaysDeadline = $mahasiswa->deadlines()
             ->where('date', $todayDate)
             ->orderBy('time')
             ->first();
-        
+
         // Get all deadlines sorted by date and time
         $allDeadlines = $mahasiswa->deadlines->sortBy(function ($deadline) {
             return [
@@ -87,6 +88,25 @@ class MahasiswaController extends Controller
         return back();
     }
 
+    public function deleteNotification($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->delete();
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back();
+    }
+
+    public function deleteAllNotifications()
+    {
+        Auth::user()->readNotifications()->delete();
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back();
+    }
+
     public function content()
     {
         // Ensure only mahasiswa can access this content
@@ -104,82 +124,92 @@ class MahasiswaController extends Controller
         if (Auth::user()->role !== 'mahasiswa') {
             return redirect('/');
         }
-        
+
         // Get mahasiswa record
         $mahasiswa = Auth::user()->mahasiswa;
-        
+
         // Get pending requests for this mahasiswa
         $requests = DosenMahasiswaRequest::where('mahasiswa_email', Auth::user()->email)
             ->where('status', 'pending')
             ->with('dosen.user')
             ->get();
-            
+
         return response()->json($requests);
     }
-    
+
     public function acceptDosenRequest(Request $request, $id)
     {
         // Ensure only mahasiswa can access this
         if (Auth::user()->role !== 'mahasiswa') {
             return redirect('/');
         }
-        
+
         // Find the request
         $dosenRequest = DosenMahasiswaRequest::findOrFail($id);
-        
+
         // Check if the request is for this mahasiswa
         if ($dosenRequest->mahasiswa_email !== Auth::user()->email) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
-        
+
         // Update the request status
         $dosenRequest->update([
             'mahasiswa_id' => Auth::user()->mahasiswa->id,
             'status' => 'accepted'
         ]);
-        
+
+        // Notify the Dosen
+        if ($dosenRequest->dosen && $dosenRequest->dosen->user) {
+            $dosenRequest->dosen->user->notify(new RequestResponseNotification($dosenRequest, 'accepted'));
+        }
+
         // Mark related notification as read
         Auth::user()->notifications()
             ->where('data->request_id', $id)
             ->get()
-            ->each(function($n) {
+            ->each(function ($n) {
                 $n->markAsRead();
             });
-        
+
         return response()->json(['success' => true, 'message' => 'Request accepted successfully']);
     }
-    
+
     public function rejectDosenRequest(Request $request, $id)
     {
         // Ensure only mahasiswa can access this
         if (Auth::user()->role !== 'mahasiswa') {
             return redirect('/');
         }
-        
+
         // Find the request
         $dosenRequest = DosenMahasiswaRequest::findOrFail($id);
-        
+
         // Check if the request is for this mahasiswa
         if ($dosenRequest->mahasiswa_email !== Auth::user()->email) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
-        
+
         // Update the request status
         $dosenRequest->update([
             'status' => 'rejected'
         ]);
-        
+
+        // Notify the Dosen
+        if ($dosenRequest->dosen && $dosenRequest->dosen->user) {
+            $dosenRequest->dosen->user->notify(new RequestResponseNotification($dosenRequest, 'rejected'));
+        }
+
         // Mark related notification as read
         Auth::user()->notifications()
             ->where('data->request_id', $id)
             ->get()
-            ->each(function($n) {
+            ->each(function ($n) {
                 $n->markAsRead();
             });
-        
+
         return response()->json(['success' => true, 'message' => 'Request rejected successfully']);
     }
-    
+
     public function learningDevelopment()
     {
         // Ensure only mahasiswa can access this page
@@ -190,12 +220,12 @@ class MahasiswaController extends Controller
         try {
             // Get the authenticated mahasiswa data
             $mahasiswa = Auth::user()->mahasiswa;
-            
+
             // Check if mahasiswa exists
             if (!$mahasiswa) {
                 abort(404, 'Mahasiswa profile not found');
             }
-            
+
             // Fetch Quiz Data with safety checks
             $quizAttempts = \App\Models\QuizAttempt::where('mahasiswa_id', $mahasiswa->id)
                 ->with('exercise')
@@ -241,7 +271,7 @@ class MahasiswaController extends Controller
             $allActivities = collect([...$quizAttempts, ...$assignmentSubmissions])->sortBy('date');
             $recentActivities = $allActivities->take(-3);
             $recentAverage = $recentActivities->avg('score') ?? 0;
-            
+
             $trend = 0;
             if ($totalAverage > 0) {
                 $trend = (($recentAverage - $totalAverage) / $totalAverage) * 100;
@@ -265,7 +295,7 @@ class MahasiswaController extends Controller
                 ->with('dosen') // Eager load dosen to show who gave feedback
                 ->orderBy('created_at', 'desc')
                 ->get();
-            
+
             // Return the view
             return view('mahasiswa.learning_development', compact(
                 'mahasiswa',
@@ -280,26 +310,26 @@ class MahasiswaController extends Controller
                 'missedAssignments',
                 'generalFeedbacks'
             ));
-            
+
         } catch (\Exception $e) {
             // Log the error for debugging
             \Log::error('Error in learningDevelopment: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             // Return error view or redirect with error message
             return redirect()
                 ->route('mahasiswa.dashboard')
                 ->with('error', 'Terjadi kesalahan saat memuat data learning development: ' . $e->getMessage());
         }
     }
-    
+
     /**
      * Get all exercise results from different sources (QuizAttempt, AssignmentSubmission, ExerciseResult)
      */
     private function getAllExerciseResults($mahasiswa)
     {
         $allResults = collect();
-        
+
         // Get QuizAttempts (for quiz exercises)
         foreach ($mahasiswa->quizAttempts ?? collect() as $attempt) {
             $allResults->push((object) [
@@ -309,7 +339,7 @@ class MahasiswaController extends Controller
                 'type' => 'quiz'
             ]);
         }
-        
+
         // Get AssignmentSubmissions (for assignment exercises)
         foreach ($mahasiswa->assignmentSubmissions ?? collect() as $submission) {
             // Only include if submitted
@@ -323,7 +353,7 @@ class MahasiswaController extends Controller
                 ]);
             }
         }
-        
+
         // Get ExerciseResults (if any exist)
         foreach ($mahasiswa->exerciseResults ?? collect() as $result) {
             $allResults->push((object) [
@@ -333,13 +363,13 @@ class MahasiswaController extends Controller
                 'type' => 'exercise_result'
             ]);
         }
-        
+
         // Sort by attempted_at
         return $allResults->sortBy(function ($result) {
             return $result->attempted_at ? $result->attempted_at->timestamp : 0;
         })->values();
     }
-    
+
     /**
      * Prepare chart data from exercise results
      * Groups results by date and shows individual scores
@@ -349,7 +379,7 @@ class MahasiswaController extends Controller
         if ($exerciseResults->isEmpty()) {
             return [];
         }
-        
+
         // Group results by date (not month) to show individual activities
         $groupedResults = $exerciseResults->groupBy(function ($result) {
             $date = $result->attempted_at ?? now();
@@ -358,29 +388,29 @@ class MahasiswaController extends Controller
             }
             return $date->format('M d');
         });
-        
+
         $chartData = [];
         foreach ($groupedResults as $date => $results) {
             // For each date, show the average score
             $averageScore = $results->avg(function ($result) {
                 return (float) ($result->score ?? 0);
             }) ?? 0;
-            
+
             $chartData[] = [
                 'date' => $date,
                 'score' => round($averageScore, 2),
                 'type' => $results->first()->type ?? 'unknown'
             ];
         }
-        
+
         // Sort by date to ensure chronological order
         usort($chartData, function ($a, $b) {
             return strtotime($a['date']) <=> strtotime($b['date']);
         });
-        
+
         return $chartData;
     }
-    
+
     /**
      * Calculate statistics for the dashboard
      */
@@ -389,7 +419,7 @@ class MahasiswaController extends Controller
         // Separate quiz and assignment results
         $quizResults = collect();
         $assignmentResults = collect();
-        
+
         foreach ($allExerciseResults as $result) {
             if ($result->type === 'quiz') {
                 $quizResults->push($result);
@@ -397,48 +427,60 @@ class MahasiswaController extends Controller
                 $assignmentResults->push($result);
             }
         }
-        
+
         // Overall statistics
-        $overallAverage = $allExerciseResults->isNotEmpty() 
-            ? round($allExerciseResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+        $overallAverage = $allExerciseResults->isNotEmpty()
+            ? round($allExerciseResults->avg(function ($r) {
+                return (float) ($r->score ?? 0);
+            }), 1)
             : 0;
-        
+
         // Recent average (last 3 activities)
         $recentResults = $allExerciseResults->take(-3);
         $recentAverage = $recentResults->isNotEmpty()
-            ? round($recentResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+            ? round($recentResults->avg(function ($r) {
+                return (float) ($r->score ?? 0);
+            }), 1)
             : 0;
-        
+
         // Performance trend (recent average vs overall average)
         $performanceTrend = 0;
         if ($overallAverage > 0 && $recentAverage > 0) {
             $performanceTrend = round((($recentAverage - $overallAverage) / $overallAverage) * 100, 1);
         }
-        
+
         // Quiz statistics
         $quizStats = [
             'total_attempts' => $quizResults->count(),
             'missed' => 0, // Can be calculated based on exercises assigned
             'average_score' => $quizResults->isNotEmpty()
-                ? round($quizResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+                ? round($quizResults->avg(function ($r) {
+                    return (float) ($r->score ?? 0);
+                }), 1)
                 : 0.0,
             'highest_score' => $quizResults->isNotEmpty()
-                ? round($quizResults->max(function ($r) { return (float)($r->score ?? 0); }), 0)
+                ? round($quizResults->max(function ($r) {
+                    return (float) ($r->score ?? 0);
+                }), 0)
                 : 0
         ];
-        
+
         // Assignment statistics
         $assignmentStats = [
             'total_submissions' => $assignmentResults->count(),
             'missed' => 0, // Can be calculated based on exercises assigned
             'average_score' => $assignmentResults->isNotEmpty()
-                ? round($assignmentResults->avg(function ($r) { return (float)($r->score ?? 0); }), 1)
+                ? round($assignmentResults->avg(function ($r) {
+                    return (float) ($r->score ?? 0);
+                }), 1)
                 : 0.0,
             'highest_score' => $assignmentResults->isNotEmpty()
-                ? round($assignmentResults->max(function ($r) { return (float)($r->score ?? 0); }), 0)
+                ? round($assignmentResults->max(function ($r) {
+                    return (float) ($r->score ?? 0);
+                }), 0)
                 : 0
         ];
-        
+
         return [
             'overall_average' => $overallAverage,
             'recent_average' => $recentAverage,

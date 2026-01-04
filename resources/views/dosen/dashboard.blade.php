@@ -1,113 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+@section('container_class', 'w-full')
 
+@push('styles')
     <style>
-        /* Profile Popup Styles */
-        .profile-popup {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: #1f2f1f;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            min-width: 250px;
-            padding: 20px;
-        }
-
-        .profile-popup.show {
-            display: block;
-        }
-
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-
-        .popup-overlay.show {
-            display: block;
-        }
-
-        .profile-item {
-            padding: 12px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .profile-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .profile-divider {
-            height: 1px;
-            background-color: rgba(255, 255, 255, 0.1);
-            margin: 10px 0;
-        }
-
-        /* Language submenu */
-        .language-submenu {
-            display: none;
-            margin-left: 20px;
-        }
-
-        .language-submenu.show {
-            display: block;
-        }
-
-        /* Notification badge */
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Notification Popup Styles */
-        .notification-popup {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 70px;
-            background-color: #1f2f1f;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            min-width: 300px;
-            max-width: 350px;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .notification-popup.show {
-            display: block;
-        }
-
-        .logo-container {
-            cursor: pointer;
-        }
+        /* Specific page styles moved from original file */
 
         /* Profile Card Styles */
         .profile-card {
@@ -348,256 +245,135 @@
             color: #ffffff;
         }
     </style>
-</head>
+@endpush
 
-<body class="bg-[#4b5b3b] text-white font-sans relative overflow-x-hidden">
-    <!-- Decorative Line Background -->
-    <div class="fixed inset-0 z-0 overflow-hidden">
-        <img src="{{ asset('line.png') }}" alt="Decorative Line"
-            class="w-full h-full object-cover opacity-10 scale-150">
-    </div>
+@section('content')
+    <!-- Greeting -->
+    <h2 class="text-center text-3xl font-bold mt-10 mb-8">
+        Halo {{ Auth::user()->username }}, selamat datang di StudyFlow!
+    </h2>
 
-    <!-- Popup Overlay -->
-    <div class="popup-overlay" id="popupOverlay" onclick="closeAllPopups()"></div>
-
-    <!-- Notification Popup -->
-    <div class="notification-popup" id="notificationPopup">
-        <div class="mb-4">
-            <i class="fa-regular fa-bell text-3xl text-gray-400 mb-3"></i>
-            <h3 class="font-bold text-xl mb-2">Notifications</h3>
-            <p class="text-gray-400">Notifications will be displayed here</p>
-        </div>
-    </div>
-
-    <!-- Profile Popup -->
-    <div class="profile-popup" id="profilePopup">
-        <!-- User Info -->
-        <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-700">
-            <div class="bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center">
-                @if(Auth::user() && Auth::user()->profile_picture)
-                    <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_picture) }}" alt="Profile"
-                        class="rounded-full w-12 h-12 object-cover">
-                @else
-                    <i class="fa-solid fa-user text-xl"></i>
-                @endif
-            </div>
-            <div>
-                <p class="font-semibold">{{ Auth::user()->username }}</p>
-                <p class="text-sm text-gray-400">{{ Auth::user()->email }}</p>
-            </div>
-        </div>
-
-        <!-- Profile Menu Items -->
-        <div class="profile-item" onclick="window.location.href='{{ route('profile.settings') }}'">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-user-gear"></i>
-                <span>Profile Settings</span>
-            </div>
-        </div>
-
-        <div class="profile-divider"></div>
-
-        <!-- Language Options -->
-        <div class="profile-item" onclick="toggleLanguageMenu()">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-language"></i>
-                    <span>Language</span>
-                </div>
-                <i class="fa-solid fa-chevron-right text-gray-400"></i>
-            </div>
-        </div>
-
-        <!-- Language Submenu -->
-        <div class="language-submenu" id="languageMenu">
-            <div class="profile-item">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-flag-usa"></i>
-                    <span>English</span>
-                </div>
+    <!-- Feedback Modal (Success/Error) -->
+    <div id="feedbackModal"
+        class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] hidden transition-opacity duration-300">
+        <div
+            class="bg-[#1a261a] rounded-xl p-8 w-96 text-center shadow-2xl transform scale-100 transition-transform duration-300 border border-[#2d3a2d]">
+            <!-- Icon Circle -->
+            <div id="modalIconContainer" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i id="modalIcon" class="fa-solid text-4xl"></i>
             </div>
 
-            <div class="profile-item">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-flag"></i>
-                    <span>Indonesian</span>
-                </div>
-            </div>
-        </div>
+            <h2 id="modalTitle" class="text-white text-2xl font-bold mb-3"></h2>
+            <p id="modalMessage" class="text-gray-300 mb-4 leading-relaxed"></p>
 
-        <div class="profile-divider"></div>
-
-        <!-- Logout -->
-        <div class="profile-item" onclick="window.location.href='{{ route('logout') }}'">
-            <div class="flex items-center gap-3 text-red-400">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Logout</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="relative z-10 min-h-screen">
-        <!-- HEADER -->
-        <header class="w-full bg-[#1f2f1f] text-white flex items-center justify-between px-8 py-4">
-            <div class="flex items-center gap-3">
-                @if(Auth::user() && Auth::user()->profile_picture)
-                    <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_picture) }}" alt="Profile"
-                        class="rounded-full w-10 h-10 object-cover">
-                @else
-                    <div class="bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                @endif
-                <div>
-                    <div class="font-semibold">{{ Auth::user()->username }}</div>
-                    <div class="text-xs text-gray-400">{{ Auth::user()->role }}</div>
-                </div>
-            </div>
-            <div class="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 logo-container"
-                onclick="window.location.href='{{ route('dosen.dashboard') }}'">
-                <img src="{{ asset('logo.png') }}" class="w-24 h-24 filter brightness-0 invert" />
-            </div>
-            <div class="flex gap-6 text-3xl relative">
-                <div class="relative cursor-pointer" id="bellIcon">
-                    <i class="fa-regular fa-bell"></i>
-                    <span class="notification-badge">3</span>
-                </div>
-                <div class="cursor-pointer" id="gearIcon">
-                    <i class="fa-solid fa-gear"></i>
-                </div>
-            </div>
-        </header>
-
-        <!-- Greeting -->
-        <h2 class="text-center text-3xl font-bold mt-10 mb-8">
-            Halo {{ Auth::user()->username }}, selamat datang di StudyFlow!
-        </h2>
-
-
-        <!-- Success/Error Messages -->
-        <!-- Feedback Modal (Success/Error) -->
-        <div id="feedbackModal"
-            class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] hidden transition-opacity duration-300">
-            <div
-                class="bg-[#1a261a] rounded-xl p-8 w-96 text-center shadow-2xl transform scale-100 transition-transform duration-300 border border-[#2d3a2d]">
-                <!-- Icon Circle -->
-                <div id="modalIconContainer"
-                    class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i id="modalIcon" class="fa-solid text-4xl"></i>
-                </div>
-
-                <h2 id="modalTitle" class="text-white text-2xl font-bold mb-3"></h2>
-                <p id="modalMessage" class="text-gray-300 mb-4 leading-relaxed"></p>
-
-                <!-- Auto-close Progress -->
-                <div class="mb-6 w-full max-w-[200px] mx-auto">
-                    <p id="countdownText" class="text-xs text-gray-400 mb-2 font-medium">Menutup otomatis dalam 3 detik
-                    </p>
-                    <div class="w-full bg-[#2d3a2d] rounded-full h-1.5 overflow-hidden">
-                        <div id="countdownBar"
-                            class="bg-[#4ade80] h-1.5 rounded-full transition-all duration-[3000ms] ease-linear w-full">
-                        </div>
+            <!-- Auto-close Progress -->
+            <div class="mb-6 w-full max-w-[200px] mx-auto">
+                <p id="countdownText" class="text-xs text-gray-400 mb-2 font-medium">Menutup otomatis dalam 3 detik
+                </p>
+                <div class="w-full bg-[#2d3a2d] rounded-full h-1.5 overflow-hidden">
+                    <div id="countdownBar"
+                        class="bg-[#4ade80] h-1.5 rounded-full transition-all duration-[3000ms] ease-linear w-full">
                     </div>
                 </div>
-
-                <button onclick="closeFeedbackModal()" id="modalButton"
-                    class="text-white font-semibold py-3 px-8 rounded-full transition w-full">
-                    Close
-                </button>
             </div>
-        </div>
 
-        <!-- Search Bar -->
-        <div class="max-w-3xl mx-auto px-6 mb-10 relative">
-            <div class="relative">
-                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="searchInput" placeholder="Search..."
-                    class="w-full pl-12 pr-4 py-4 rounded-full bg-[#1f2f1f] text-white border border-[#436040] placeholder-gray-400 focus:outline-none focus:border-[#48bb78] search-bar text-lg shadow-lg"
-                    onkeyup="searchProfiles()">
-            </div>
-            <div id="autocomplete-list" class="autocomplete-items hidden"></div>
+            <button onclick="closeFeedbackModal()" id="modalButton"
+                class="text-white font-semibold py-3 px-8 rounded-full transition w-full">
+                Close
+            </button>
         </div>
+    </div>
 
-        <!-- Profile Cards Section -->
-        <div class="max-w-6xl mx-auto px-6 mb-16">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="profileCardsContainer">
-                @foreach($requests as $request)
-                    <div class="profile-card">
-                        <div class="flex items-start justify-between mb-6 pb-4 border-b border-gray-300">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="bg-[#395035] rounded-full w-14 h-14 flex items-center justify-center border border-[#436040] overflow-hidden">
-                                    @if($request->mahasiswa && $request->mahasiswa->user && $request->mahasiswa->user->profile_picture)
-                                        <img src="{{ asset('storage/profile_pictures/' . $request->mahasiswa->user->profile_picture) }}"
-                                            alt="Profile" class="w-full h-full object-cover">
-                                    @else
-                                        <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
-                                    @endif
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-lg text-black">{{ $request->mahasiswa_name }}</h3>
-                                    <p class="text-sm text-gray-700">Mahasiswa S1 Informatika</p>
-                                </div>
+    <!-- Search Bar -->
+    <div class="max-w-3xl mx-auto px-6 mb-10 relative">
+        <div class="relative">
+            <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="searchInput" placeholder="Search..."
+                class="w-full pl-12 pr-4 py-4 rounded-full bg-[#1f2f1f] text-white border border-[#436040] placeholder-gray-400 focus:outline-none focus:border-[#48bb78] search-bar text-lg shadow-lg"
+                onkeyup="searchProfiles()">
+        </div>
+        <div id="autocomplete-list" class="autocomplete-items hidden"></div>
+    </div>
+
+    <!-- Profile Cards Section -->
+    <div class="max-w-6xl mx-auto px-6 mb-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="profileCardsContainer">
+            @foreach($requests as $request)
+                <div class="profile-card">
+                    <div class="flex items-start justify-between mb-6 pb-4 border-b border-gray-300">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="bg-[#395035] rounded-full w-14 h-14 flex items-center justify-center border border-[#436040] overflow-hidden">
+                                @if($request->mahasiswa && $request->mahasiswa->user && $request->mahasiswa->user->profile_picture)
+                                    <img src="{{ asset('storage/profile_pictures/' . $request->mahasiswa->user->profile_picture) }}"
+                                        alt="Profile" class="w-full h-full object-cover">
+                                @else
+                                    <i class="fa-solid fa-graduation-cap text-white text-2xl"></i>
+                                @endif
                             </div>
-                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                                @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
-                                @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
-                                @else bg-red-100 text-red-800 border border-red-300
-                                @endif">
-                                {{ ucfirst($request->status) }}
-                            </span>
-                        </div>
-
-                        <!-- Learning Progress for Accepted Requests -->
-                        @if($request->status == 'accepted' && $request->mahasiswa)
-                            <div class="space-y-3">
-                                <!-- Primary Actions (Create) -->
-                                <div class="grid grid-cols-2 gap-3">
-                                    <button class="btn-action btn-primary-action"
-                                        onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
-                                        <i class="fa-solid fa-plus"></i>
-                                        <span>Assignment</span>
-                                    </button>
-                                    <button class="btn-action btn-primary-action"
-                                        onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
-                                        <i class="fa-solid fa-plus"></i>
-                                        <span>Quiz</span>
-                                    </button>
-                                </div>
-
-                                <!-- Secondary Actions (View/Monitor) -->
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button class="btn-action btn-secondary-action"
-                                        onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
-                                        <i class="fa-solid fa-eye"></i>
-                                        <span class="hidden md:inline">Details</span>
-                                    </button>
-                                    <button class="btn-action btn-secondary-action"
-                                        onclick="window.location.href='{{ route('dosen.mahasiswa.development', $request->mahasiswa->id) }}'">
-                                        <i class="fa-solid fa-chart-line"></i>
-                                        <span class="hidden md:inline">Dev</span>
-                                    </button>
-                                    <button class="btn-action btn-secondary-action"
-                                        onclick="window.location.href='{{ route('dosen.mahasiswa.exercises', $request->mahasiswa->id) }}'">
-                                        <i class="fa-solid fa-list-check"></i>
-                                        <span class="hidden md:inline">List</span>
-                                    </button>
-                                </div>
-
-                                <!-- Destructive Action -->
-                                <div class="pt-2 mt-2 border-t border-gray-300">
-                                    <button type="button"
-                                        onclick="openRemoveModal('{{ route('dosen.mahasiswa.remove', $request->id) }}')"
-                                        class="btn-action btn-danger-action">
-                                        <i class="fa-solid fa-user-minus"></i>
-                                        <span>Remove Student</span>
-                                    </button>
-                                </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-black">{{ $request->mahasiswa_name }}</h3>
+                                <p class="text-sm text-gray-700">Mahasiswa S1 Informatika</p>
                             </div>
-                        @endif
+                        </div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
+                                    @if($request->status == 'pending') bg-yellow-100 text-yellow-800 border border-yellow-300
+                                    @elseif($request->status == 'accepted') bg-green-100 text-green-800 border border-green-300
+                                    @else bg-red-100 text-red-800 border border-red-300
+                                    @endif">
+                            {{ ucfirst($request->status) }}
+                        </span>
                     </div>
-                @endforeach
-            </div>
+
+                    <!-- Learning Progress for Accepted Requests -->
+                    @if($request->status == 'accepted' && $request->mahasiswa)
+                        <div class="space-y-3">
+                            <!-- Primary Actions (Create) -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="btn-action btn-primary-action"
+                                    onclick="window.location.href='{{ route('dosen.exercise.create', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Assignment</span>
+                                </button>
+                                <button class="btn-action btn-primary-action"
+                                    onclick="window.location.href='{{ route('dosen.quiz.create', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Quiz</span>
+                                </button>
+                            </div>
+
+                            <!-- Secondary Actions (View/Monitor) -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="btn-action btn-secondary-action"
+                                    onclick="viewLearningProgress({{ $request->mahasiswa->id }})">
+                                    <i class="fa-solid fa-eye"></i>
+                                    <span class="hidden md:inline">Details</span>
+                                </button>
+                                <button class="btn-action btn-secondary-action"
+                                    onclick="window.location.href='{{ route('dosen.mahasiswa.development', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                    <span class="hidden md:inline">Dev</span>
+                                </button>
+                                <button class="btn-action btn-secondary-action"
+                                    onclick="window.location.href='{{ route('dosen.mahasiswa.exercises', $request->mahasiswa->id) }}'">
+                                    <i class="fa-solid fa-list-check"></i>
+                                    <span class="hidden md:inline">List</span>
+                                </button>
+                            </div>
+
+                            <!-- Destructive Action -->
+                            <div class="pt-2 mt-2 border-t border-gray-300">
+                                <button type="button"
+                                    onclick="openRemoveModal('{{ route('dosen.mahasiswa.remove', $request->id) }}')"
+                                    class="btn-action btn-danger-action">
+                                    <i class="fa-solid fa-user-minus"></i>
+                                    <span>Remove Student</span>
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
         </div>
     </div>
 
@@ -688,7 +464,9 @@
             </form>
         </div>
     </div>
+@endsection
 
+@push('scripts')
     <script>
         // Show popup based on session messages
         window.onload = function () {
@@ -698,7 +476,7 @@
             @if(session('error'))
                 showFeedbackModal('error', 'Error!', "{{ session('error') }}");
             @endif
-        };
+            };
 
         // Timer Variables
         let autoCloseTimer;
@@ -787,79 +565,6 @@
 
             modal.classList.add('hidden');
         }
-        // Add event listeners after DOM is loaded
-        document.addEventListener('DOMContentLoaded', function () {
-            // Add click event to bell icon
-            document.getElementById('bellIcon').addEventListener('click', function (e) {
-                e.stopPropagation();
-                toggleNotificationPopup();
-            });
-
-            // Add click event to gear icon
-            document.getElementById('gearIcon').addEventListener('click', function (e) {
-                e.stopPropagation();
-                toggleProfilePopup();
-            });
-        });
-
-        // Toggle profile popup visibility
-        function toggleProfilePopup() {
-            // Close notification popup if open
-            document.getElementById('notificationPopup').classList.remove('show');
-
-            const popup = document.getElementById('profilePopup');
-            const overlay = document.getElementById('popupOverlay');
-
-            popup.classList.toggle('show');
-            overlay.classList.toggle('show');
-
-            // Hide language menu when closing profile popup
-            if (!popup.classList.contains('show')) {
-                document.getElementById('languageMenu').classList.remove('show');
-            }
-        }
-
-        // Toggle notification popup visibility
-        function toggleNotificationPopup() {
-            // Close profile popup if open
-            document.getElementById('profilePopup').classList.remove('show');
-
-            const popup = document.getElementById('notificationPopup');
-            const overlay = document.getElementById('popupOverlay');
-
-            popup.classList.toggle('show');
-            overlay.classList.toggle('show');
-        }
-
-        // Close all popups
-        function closeAllPopups() {
-            document.getElementById('profilePopup').classList.remove('show');
-            document.getElementById('notificationPopup').classList.remove('show');
-            document.getElementById('languageMenu').classList.remove('show');
-            document.getElementById('popupOverlay').classList.remove('show');
-        }
-
-        // Toggle language submenu
-        function toggleLanguageMenu() {
-            const languageMenu = document.getElementById('languageMenu');
-            languageMenu.classList.toggle('show');
-        }
-
-        // Close popup when clicking outside
-        document.addEventListener('click', function (event) {
-            const profilePopup = document.getElementById('profilePopup');
-            const notificationPopup = document.getElementById('notificationPopup');
-            const bellIcon = document.getElementById('bellIcon');
-            const gearIcon = document.getElementById('gearIcon');
-
-            if (!profilePopup.contains(event.target) &&
-                !notificationPopup.contains(event.target) &&
-                !bellIcon.contains(event.target) &&
-                !gearIcon.contains(event.target) &&
-                (profilePopup.classList.contains('show') || notificationPopup.classList.contains('show'))) {
-                closeAllPopups();
-            }
-        });
 
         // View profile details
         function viewProfileDetails(name) {
@@ -971,19 +676,8 @@
 
             // If no cards match, show a message
             if (foundCount === 0 && filter !== '') {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <i class="fa-solid fa-search text-5xl text-gray-400 mb-4"></i>
-                        <h3 class="text-2xl font-bold text-gray-300">No profiles found</h3>
-                        <p class="text-gray-400 mt-2">Try a different search term</p>
-                    </div>
-                `;
-            } else if (filter === '') {
-                // Reload original content when search is cleared
-                location.reload();
+                // You can add a no results message logic here if you want
             }
         }
     </script>
-</body>
-
-</html>
+@endpush

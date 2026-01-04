@@ -37,22 +37,41 @@ class CheckNotifications extends Command
         $now = Carbon::now('Asia/Jakarta');
         $todayDate = $now->toDateString();
         $todayDay = $now->format('l'); // e.g., "Thursday"
-        
+
         $this->info("Checking notifications for: $todayDay, $todayDate");
 
         // 1. Check Schedules (Today)
-        // Match day name with multiple formats (Title Case, lowercase, UPPERCASE)
-        $schedules = Schedule::where(function($query) use ($todayDay) {
-                $query->where('day', $todayDay)
-                      ->orWhere('day', strtolower($todayDay))
-                      ->orWhere('day', strtoupper($todayDay));
-            })
+        // Map English days to Indonesian days
+        $englishDay = $todayDay; // e.g., "Sunday"
+        $indonesianDays = [
+            'Sunday' => 'Minggu',
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu'
+        ];
+        $indoDay = $indonesianDays[$englishDay] ?? $englishDay;
+
+        // Match day name with multiple formats (English & Indonesian)
+        $schedules = Schedule::where(function ($query) use ($englishDay, $indoDay) {
+            // Check English formats
+            $query->where('day', $englishDay)
+                ->orWhere('day', strtolower($englishDay))
+                ->orWhere('day', strtoupper($englishDay))
+                // Check Indonesian formats
+                ->orWhere('day', $indoDay)
+                ->orWhere('day', strtolower($indoDay))
+                ->orWhere('day', strtoupper($indoDay));
+        })
             ->with('mahasiswa.user')
             ->get();
 
         foreach ($schedules as $schedule) {
             $user = $schedule->mahasiswa->user;
-            if (!$user) continue;
+            if (!$user)
+                continue;
 
             // Check if notification already sent today for this schedule
             $alreadySent = $user->notifications()
@@ -75,7 +94,8 @@ class CheckNotifications extends Command
 
         foreach ($deadlines as $deadline) {
             $user = $deadline->mahasiswa->user;
-            if (!$user) continue;
+            if (!$user)
+                continue;
 
             // Check if notification already sent today for this deadline
             $alreadySent = $user->notifications()

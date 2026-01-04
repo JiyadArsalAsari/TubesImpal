@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\NewQuizNotification;
+use App\Notifications\QuizSubmittedNotification;
 
 class QuizController extends Controller
 {
@@ -46,10 +48,10 @@ class QuizController extends Controller
     {
         Log::info('=== QUIZ CONTROLLER STORE METHOD CALLED ===');
         Log::info('QuizController@store method called with mahasiswaId: ' . $mahasiswaId);
-        
+
         $user = Auth::user();
         Log::info('User authenticated: ' . ($user ? 'Yes' : 'No') . ', Role: ' . ($user ? $user->role : 'None'));
-        
+
         if ($user->role !== User::ROLE_DOSEN) {
             Log::warning('User is not a dosen, redirecting');
             return redirect('/')->with('error', 'Hanya dosen yang dapat membuat quiz.');
@@ -57,12 +59,12 @@ class QuizController extends Controller
 
         $dosenId = $user->dosen ? $user->dosen->id : $user->id;
         Log::info('Dosen ID: ' . $dosenId);
-        
+
         $connected = DosenMahasiswaRequest::where('dosen_id', $dosenId)
             ->where('mahasiswa_id', $mahasiswaId)
             ->where('status', 'accepted')
             ->exists();
-        
+
         Log::info('Connection check result: ' . ($connected ? 'Connected' : 'Not connected'));
 
         if (!$connected) {
@@ -72,14 +74,14 @@ class QuizController extends Controller
 
         $maxQuestions = env('MAX_QUIZ_QUESTIONS', 50);
         Log::info('Max questions allowed: ' . $maxQuestions);
-        
+
         // Log request data for debugging
         Log::info('Request data: ', $request->all());
-        
+
         // Simplified approach - try to create quiz without complex validation first
         try {
             Log::info('Attempting simplified quiz creation');
-            
+
             // Create exercise
             $exercise = Exercise::create([
                 'dosen_id' => $dosenId,
@@ -92,42 +94,48 @@ class QuizController extends Controller
                 'status' => 'published',
                 'max_attempts' => $request->get('max_attempts', 1),
             ]);
-            
+
             Log::info('Created exercise with ID: ' . $exercise->id);
-            
+
             // Try to create questions if they exist in request
             $questionsData = $request->get('questions', []);
             Log::info('Found ' . count($questionsData) . ' questions in request');
-            
+
             foreach ($questionsData as $qIndex => $qData) {
                 if (isset($qData['question']) && !empty($qData['question'])) {
                     Log::info('Processing question ' . $qIndex . ': ' . $qData['question']);
-                    
+
                     $question = QuizQuestion::create([
                         'exercise_id' => $exercise->id,
                         'question' => $qData['question'],
                     ]);
-                    
+
                     Log::info('Created question with ID: ' . $question->id);
-                    
+
                     // Create options if they exist
                     if (isset($qData['options']) && is_array($qData['options'])) {
                         foreach ($qData['options'] as $optIndex => $optData) {
                             if (isset($optData['option_text']) && !empty($optData['option_text'])) {
                                 Log::info('Creating option ' . $optIndex . ': ' . $optData['option_text']);
-                                
+
                                 QuizOption::create([
                                     'question_id' => $question->id,
                                     'option_text' => $optData['option_text'],
-                                    'is_correct' => isset($qData['correct_option']) && (int)$qData['correct_option'] === (int)$optIndex,
+                                    'is_correct' => isset($qData['correct_option']) && (int) $qData['correct_option'] === (int) $optIndex,
                                 ]);
                             }
                         }
                     }
                 }
             }
-            
+
             Log::info('Simplified quiz creation completed successfully');
+
+            // Notify Mahasiswa
+            if ($exercise->mahasiswa && $exercise->mahasiswa->user) {
+                $exercise->mahasiswa->user->notify(new NewQuizNotification($exercise));
+            }
+
             return redirect()->route('dosen.dashboard')->with('success', 'Quiz berhasil dibuat.');
         } catch (\Exception $e) {
             Log::error('Failed to create quiz: ' . $e->getMessage());
@@ -164,7 +172,7 @@ class QuizController extends Controller
             \Log::info('User has no mahasiswa relationship');
             return redirect('/')->with('error', 'Quiz ini tidak ditugaskan kepada Anda.');
         }
-        
+
         if ($exercise->mahasiswa_id !== $user->mahasiswa->id) {
             \Log::info('Mahasiswa ID mismatch', [
                 'exercise_mahasiswa_id' => $exercise->mahasiswa_id,
@@ -177,7 +185,7 @@ class QuizController extends Controller
         $existingAttempts = QuizAttempt::where('exercise_id', $exercise->id)
             ->where('mahasiswa_id', $user->mahasiswa->id)
             ->count();
-            
+
         if ($existingAttempts >= $exercise->max_attempts) {
             return redirect()->route('mahasiswa.exercise')->with('error', 'Anda telah mencapai batas maksimal percobaan untuk quiz ini.');
         }
@@ -218,7 +226,7 @@ class QuizController extends Controller
         $existingAttempts = QuizAttempt::where('exercise_id', $exercise->id)
             ->where('mahasiswa_id', $user->mahasiswa->id)
             ->count();
-            
+
         if ($existingAttempts >= $exercise->max_attempts) {
             return redirect()->route('mahasiswa.exercise')->with('error', 'Anda telah mencapai batas maksimal percobaan untuk quiz ini.');
         }
@@ -260,20 +268,20 @@ class QuizController extends Controller
 
             $attempt->score = $total > 0 ? round(($score / $total) * 100) : 0;
             $attempt->save();
-                
+
             // Mark exercise as completed
             \Log::info('Updating quiz exercise status', [
                 'exercise_id' => $exercise->id,
                 'current_status' => $exercise->status,
                 'new_status' => 'completed'
             ]);
-            
+
             // Fetch a fresh instance of the exercise to ensure we're updating the correct record
             $freshExercise = Exercise::find($exercise->id);
             if ($freshExercise) {
                 $freshExercise->status = 'completed';
                 $saved = $freshExercise->save();
-                
+
                 \Log::info('Quiz exercise status update result', [
                     'exercise_id' => $freshExercise->id,
                     'saved' => $saved,
@@ -284,8 +292,14 @@ class QuizController extends Controller
                     'exercise_id' => $exercise->id
                 ]);
             }
+
+            // Notify the Dosen about quiz completion
+            if ($exercise->dosen && $exercise->dosen->user && $attempt) {
+                $freshAttempt = $attempt->fresh(['mahasiswa']);
+                $exercise->dosen->user->notify(new QuizSubmittedNotification($freshAttempt));
+            }
         });
-        
+
         return redirect()
             ->route('mahasiswa.quiz.review', [$exercise->id, 'attempt' => $attempt->id])
             ->with('success', 'Quiz dikumpulkan. Skor: ' . ($total > 0 ? round(($score / $total) * 100) : 0));

@@ -10,6 +10,8 @@ use App\Models\AssignmentSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\NewAssignmentNotification;
+use App\Notifications\AssignmentSubmittedNotification;
 
 class ExerciseController extends Controller
 {
@@ -58,9 +60,12 @@ class ExerciseController extends Controller
 
         $exercises = Exercise::where('mahasiswa_id', $mahasiswa->id)
             ->where('status', 'completed')
-            ->with(['submissions' => function($query) {
-                $query->orderBy('submitted_at', 'desc');
-            }, 'attempts'])
+            ->with([
+                'submissions' => function ($query) {
+                    $query->orderBy('submitted_at', 'desc');
+                },
+                'attempts'
+            ])
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function ($exercise) {
@@ -74,7 +79,7 @@ class ExerciseController extends Controller
                 }
                 // Ensure max_attempts is available
                 $exercise->max_attempts = $exercise->max_attempts ?? 1;
-                
+
                 return $exercise;
             });
 
@@ -133,7 +138,7 @@ class ExerciseController extends Controller
 
         // Since we're focusing only on assignments, force the type to 'assignment'
         $request->merge(['type' => 'assignment']);
-        
+
         $validated = $request->validate([
             'type' => 'required|in:quiz,assignment',
             'title' => 'required|string|max:255',
@@ -153,7 +158,7 @@ class ExerciseController extends Controller
             $filePath = $file->storeAs('assignments', $fileName, 'public');
         }
 
-        Exercise::create([
+        $exercise = Exercise::create([
             'dosen_id' => $dosenId,
             'mahasiswa_id' => $mahasiswaId,
             'type' => $validated['type'],
@@ -165,6 +170,12 @@ class ExerciseController extends Controller
             'status' => $validated['status'] ?? 'published',
             'max_attempts' => $validated['max_attempts'] ?? 1,
         ]);
+
+        // Notify Mahasiswa
+        $mahasiswa = Mahasiswa::with('user')->find($mahasiswaId);
+        if ($mahasiswa && $mahasiswa->user) {
+            $mahasiswa->user->notify(new NewAssignmentNotification($exercise));
+        }
 
         return redirect()->route('dosen.dashboard')->with('success', 'Assignment berhasil dibuat.');
     }
@@ -184,7 +195,7 @@ class ExerciseController extends Controller
         // Check ownership/permission
         $dosen = $user->dosen;
         $dosenId = $dosen ? $dosen->id : $user->id;
-        
+
         if ($exercise->dosen_id != $dosenId) {
             return redirect()->route('dosen.dashboard')->with('error', 'Anda tidak memiliki izin untuk mengedit exercise ini.');
         }
@@ -229,7 +240,7 @@ class ExerciseController extends Controller
             if ($exercise->file_attachment) {
                 Storage::disk('public')->delete($exercise->file_attachment);
             }
-            
+
             $file = $request->file('file_attachment');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $filePath = $file->storeAs('assignments', $fileName, 'public');
@@ -241,7 +252,7 @@ class ExerciseController extends Controller
         $exercise->deadline = $validated['deadline'] ?? null;
         $exercise->link = $validated['link'] ?? null;
         $exercise->status = $validated['status'];
-        
+
         $exercise->save();
 
         return redirect()->route('dosen.mahasiswa.exercises', $exercise->mahasiswa_id)
@@ -275,7 +286,7 @@ class ExerciseController extends Controller
             ->where('mahasiswa_id', $mahasiswa->id)
             ->where('type', 'assignment')
             ->first();
-            
+
         if (!$exercise) {
             \Log::info('Assignment not found or not assigned to user', [
                 'requested_id' => $id,
@@ -286,11 +297,11 @@ class ExerciseController extends Controller
 
         if ($exercise->status !== 'published') {
             // Allow access if status is completed AND attempts < max_attempts
-             if ($exercise->status === 'completed') {
+            if ($exercise->status === 'completed') {
                 $existingAttempts = AssignmentSubmission::where('exercise_id', $exercise->id)
                     ->where('mahasiswa_id', $mahasiswa->id)
                     ->count();
-                
+
                 if ($existingAttempts >= $exercise->max_attempts) {
                     return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment sudah selesai dan batas percobaan habis.');
                 }
@@ -361,11 +372,11 @@ class ExerciseController extends Controller
 
         if ($exercise->status !== 'published') {
             // Allow access if status is completed AND attempts < max_attempts
-             if ($exercise->status === 'completed') {
+            if ($exercise->status === 'completed') {
                 $existingAttempts = AssignmentSubmission::where('exercise_id', $exercise->id)
                     ->where('mahasiswa_id', $mahasiswa->id)
                     ->count();
-                
+
                 if ($existingAttempts >= $exercise->max_attempts) {
                     return redirect()->route('mahasiswa.exercise')->with('error', 'Assignment sudah selesai dan batas percobaan habis.');
                 }
@@ -384,7 +395,7 @@ class ExerciseController extends Controller
         $existingAttempts = AssignmentSubmission::where('exercise_id', $exercise->id)
             ->where('mahasiswa_id', $mahasiswa->id)
             ->count();
-        
+
         if ($existingAttempts >= $exercise->max_attempts) {
             return redirect()->route('mahasiswa.exercise')->with('error', 'Anda telah mencapai batas maksimal percobaan untuk assignment ini.');
         }
@@ -417,13 +428,13 @@ class ExerciseController extends Controller
             'current_status' => $exercise->status,
             'new_status' => 'completed'
         ]);
-        
+
         // Fetch a fresh instance of the exercise to ensure we're updating the correct record
         $freshExercise = Exercise::find($exercise->id);
         if ($freshExercise) {
             $freshExercise->status = 'completed';
             $saved = $freshExercise->save();
-            
+
             \Log::info('Assignment exercise status update result', [
                 'exercise_id' => $freshExercise->id,
                 'saved' => $saved,
@@ -435,7 +446,12 @@ class ExerciseController extends Controller
             ]);
         }
 
+        // Notify the Dosen about assignment submission
+        if ($freshExercise && $freshExercise->dosen && $freshExercise->dosen->user) {
+            $freshSubmission = $submission->fresh(['mahasiswa']);
+            $freshExercise->dosen->user->notify(new AssignmentSubmittedNotification($freshSubmission));
+        }
+
         return redirect()->back()->with('success', 'Jawaban berhasil dikirim.');
     }
 }
-

@@ -45,11 +45,11 @@ Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'dashboard'])
 Route::get('/mahasiswa/dosen-requests', [MahasiswaController::class, 'getDosenRequests'])
     ->middleware('auth')
     ->name('mahasiswa.dosen.requests');
-    
+
 Route::post('/mahasiswa/dosen-requests/{id}/accept', [MahasiswaController::class, 'acceptDosenRequest'])
     ->middleware('auth')
     ->name('mahasiswa.dosen.requests.accept');
-    
+
 Route::post('/mahasiswa/dosen-requests/{id}/reject', [MahasiswaController::class, 'rejectDosenRequest'])
     ->middleware('auth')
     ->name('mahasiswa.dosen.requests.reject');
@@ -58,11 +58,11 @@ Route::post('/mahasiswa/dosen-requests/{id}/reject', [MahasiswaController::class
 Route::get('/mahasiswa/learning-difficulties', [LearningDifficultyController::class, 'index'])
     ->middleware('auth')
     ->name('mahasiswa.learning.difficulties');
-    
+
 Route::get('/mahasiswa/learning-difficulties/create', [LearningDifficultyController::class, 'create'])
     ->middleware('auth')
     ->name('mahasiswa.learning.difficulties.create');
-    
+
 Route::post('/mahasiswa/learning-difficulties', [LearningDifficultyController::class, 'store'])
     ->middleware('auth')
     ->name('mahasiswa.learning.difficulties.store');
@@ -103,13 +103,17 @@ Route::delete('/dosen/request/{id}/cancel', [DosenController::class, 'cancelRequ
     ->middleware('auth')
     ->name('dosen.request.cancel');
 
-Route::get('/mahasiswa/learning-recommendation', 
-    [LearningRecommendationController::class, 'index'])
+Route::get(
+    '/mahasiswa/learning-recommendation',
+    [LearningRecommendationController::class, 'index']
+)
     ->middleware('auth')
     ->name('mahasiswa.learning.recommendation');
 
-Route::get('/mahasiswa/learning-recommendation/{id}', 
-    [LearningRecommendationDetailController::class, 'show'])
+Route::get(
+    '/mahasiswa/learning-recommendation/{id}',
+    [LearningRecommendationDetailController::class, 'show']
+)
     ->middleware('auth')
     ->name('mahasiswa.learning.recommendation.detail');
 
@@ -120,6 +124,12 @@ Route::post('/mahasiswa/notifications/{id}/read', [MahasiswaController::class, '
 Route::post('/mahasiswa/notifications/read-all', [MahasiswaController::class, 'markAllNotificationsAsRead'])
     ->middleware('auth')
     ->name('mahasiswa.notifications.readAll');
+Route::delete('/mahasiswa/notifications/{id}', [MahasiswaController::class, 'deleteNotification'])
+    ->middleware('auth')
+    ->name('mahasiswa.notifications.delete');
+Route::delete('/mahasiswa/notifications', [MahasiswaController::class, 'deleteAllNotifications'])
+    ->middleware('auth')
+    ->name('mahasiswa.notifications.deleteAll');
 
 // Learning Development Route
 Route::get('/mahasiswa/learning-development', [LearningDevelopmentController::class, 'index'])
@@ -221,12 +231,12 @@ Route::get('/mahasiswa/quiz/{exerciseId}/review', [QuizController::class, 'revie
     ->name('mahasiswa.quiz.review');
 
 // Debug route for testing
-Route::get('/debug/quiz/{id}', function($id) {
+Route::get('/debug/quiz/{id}', function ($id) {
     try {
         $exercise = \App\Models\Exercise::with(['mahasiswa.user', 'dosen.user'])
             ->where('type', 'quiz')
             ->findOrFail($id);
-        
+
         return response()->json([
             'exercise' => $exercise,
             'mahasiswa' => $exercise->mahasiswa,
